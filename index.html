@@ -1,0 +1,3036 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>VTuber 观看偏好四象限</title>
+<style>
+:root{--bg:#f3f1f2;--panel:#ffffff;--ink:#262429;--muted:#76727a;--line:#ded8de;--deep:#31333a;--shadow:0 14px 36px rgba(61,53,61,.08)}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;font-family:"Noto Sans SC","PingFang SC","Microsoft YaHei","Source Han Sans SC","Noto Sans CJK SC",system-ui,sans-serif;background:linear-gradient(180deg,#f8f6f7,#f0edf0);color:var(--ink);overflow:hidden}
+button,input,select{font:inherit}
+button{cursor:pointer}
+.serif{font-family:"Noto Sans SC","PingFang SC","Microsoft YaHei","Source Han Sans SC","Noto Sans CJK SC",system-ui,sans-serif}
+.app{display:grid;grid-template-columns:300px minmax(0,1fr);gap:14px;height:100vh;padding:14px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:22px;box-shadow:var(--shadow);overflow:hidden;min-width:0}
+.main{background:transparent;border:none;box-shadow:none;overflow:visible}
+.sidebar{display:flex;flex-direction:column;min-height:0}
+.side-head{padding:18px 18px 12px;border-bottom:1px solid var(--line)}
+.side-head h1{display:none}
+.side-head p{margin:0;font-size:13px;line-height:1.7;color:var(--muted)}
+.controls{padding:12px 18px 10px;display:grid;grid-template-columns:1fr 1fr;gap:9px;border-bottom:1px solid var(--line)}
+.controls input,.controls select,.controls button{width:100%;border:1px solid var(--line);border-radius:14px;padding:10px 12px;background:#fff;color:var(--ink)}
+.controls .search{grid-column:1/-1}
+.controls .actions{grid-column:1/-1;display:flex;gap:8px}
+.list{flex:1;overflow:auto;padding:8px;display:flex;flex-direction:column;gap:8px;min-height:0}
+.member{display:grid;grid-template-columns:50px 1fr auto;align-items:center;gap:10px;padding:10px;border:1px solid var(--line);border-radius:16px;background:#fff;transition:.15s ease}
+.member:hover{transform:translateY(-1px);box-shadow:0 6px 18px rgba(70,40,50,.07)}
+.member.dragging{opacity:.55}
+.avatar{width:50px;height:50px;border-radius:50%;display:grid;place-items:center;color:#fff;font-weight:700;font-size:14px;user-select:none;box-shadow:inset 0 0 0 2px rgba(255,255,255,.18)}
+.member .meta{min-width:0}
+.member strong,.member span{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.member strong{font-size:14px}
+.member span{font-size:12px;color:var(--muted)}
+.member small{padding:2px 7px;border-radius:999px;background:#f5f0f2;color:#675f68;font-size:11px}
+.main{display:flex;flex-direction:column;min-height:0;padding:10px 10px 0}
+.topbar{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap;margin-bottom:8px;padding:2px 6px 0}
+.topbar h2{margin:0 0 4px;font-size:19px;font-weight:600;color:#3a3940}
+.topbar p{margin:0;color:var(--muted);font-size:12.5px;line-height:1.55}
+.topbar .btns{display:flex;gap:8px;flex-wrap:wrap}
+.toolbtn{border:1px solid var(--line);border-radius:12px;padding:9px 12px;background:#fff;color:#403c43}
+.toolbtn:hover{border-color:#d7bcc6;background:#fff9fb}
+.stage{flex:1;min-height:0;display:flex;padding:0}
+.board{position:relative;flex:1;width:100%;height:100%;min-height:0;background:transparent;border:none;border-radius:28px;box-shadow:none;overflow:hidden}
+.board::before{content:"";position:absolute;inset:0;background:linear-gradient(90deg,#f6eaf0 0 50%,#e8f0f7 50% 100%)}
+.board::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 0 50%,transparent 50% 100%)}
+.board-frame{position:absolute;inset:0;border-radius:28px;box-shadow:inset 0 0 0 1px rgba(95,92,102,.16);pointer-events:none;z-index:1}
+.board-credit{position:absolute;right:16px;bottom:11px;z-index:2;pointer-events:none;display:flex;flex-direction:column;align-items:flex-end;gap:4px;font-family:"Noto Sans SC","Microsoft YaHei",system-ui,sans-serif;color:#707078;letter-spacing:.025em}.board-credit .byline{font-size:9px;font-weight:400;opacity:.48}.board-credit .dept{font-size:12px;font-weight:400;opacity:.48}
+@media(max-width:980px){.board-credit{right:10px;bottom:8px;font-size:9px;opacity:.30}}
+
+.quad-overlay{position:absolute;inset:0;pointer-events:none;background:linear-gradient(180deg,transparent 0 50%,rgba(237,232,246,.92) 50% 100%),linear-gradient(90deg,transparent 0 50%,rgba(232,241,233,.92) 50% 100%);mix-blend-mode:multiply;opacity:.96}
+.axis-svg{position:absolute;inset:0;pointer-events:none}
+.axis-label{position:absolute;z-index:2;font-weight:600;color:var(--deep);text-shadow:none;letter-spacing:.01em;font-family:"Noto Sans SC","PingFang SC","Microsoft YaHei","Source Han Sans SC","Noto Sans CJK SC",system-ui,sans-serif}
+.axis-label.top{top:26px;left:50%;transform:translateX(-50%);font-size:clamp(17px,1.45vw,24px)}
+.axis-label.bottom{bottom:24px;left:50%;transform:translateX(-50%);font-size:clamp(17px,1.45vw,24px)}
+.axis-label.left{left:24px;top:50%;transform:translateY(-50%);writing-mode:vertical-rl;font-size:clamp(16px,1.35vw,22px)}
+.axis-label.right{right:24px;top:50%;transform:translateY(-50%);writing-mode:vertical-rl;font-size:clamp(16px,1.35vw,22px)}
+.board-hint{position:absolute;inset:auto 0 14px 0;text-align:center;z-index:2;color:#8f8a92;font-size:11.5px;pointer-events:none;letter-spacing:.02em}
+.placed-layer{position:absolute;inset:0;z-index:4}
+.card{position:absolute;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:6px;min-width:92px;max-width:170px;touch-action:none;user-select:none}
+.card.selected .avatar{outline:3px solid rgba(229,57,85,.18)}
+.card .avatar{width:64px;height:64px;font-size:15px;box-shadow:0 8px 18px rgba(70,40,50,.12)}
+.card .name{font-size:13px;font-weight:700;text-align:center;line-height:1.2;padding:0 4px;word-break:break-word}
+.card .sub{font-size:11px;color:var(--muted);text-align:center;line-height:1.2;padding:0 4px}
+.card .note{font-size:12px;line-height:1.35;text-align:center;color:#55545a;background:none;border:0;border-radius:0;padding:0;max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;box-shadow:none;cursor:pointer}
+.card .note-input{width:148px;min-height:46px;max-height:110px;resize:vertical;overflow:auto;border:1px solid #e4cfd9;border-radius:10px;background:rgba(255,255,255,.95);padding:6px 8px;font-size:12px;line-height:1.4;font-family:inherit;color:#49414a;text-align:left;touch-action:auto;user-select:text;outline-offset:2px;box-shadow:0 4px 12px rgba(70,40,50,.05)}.card .note-input:focus{outline:2px solid #eeafc0}.card .edit-row{display:flex;align-items:flex-start;gap:4px}.card .confirm-note{border:0;border-radius:0;padding:4px 5px;background:transparent;color:#59605f;font-weight:500;font-size:20px;cursor:pointer}.card .confirm-note:hover{color:#222}.card .tools{display:none;position:absolute;top:-12px;right:-4px;gap:4px}
+.card.selected .tools{display:flex}
+.iconbtn{width:26px;height:26px;border-radius:999px;border:1px solid #e6d7de;background:#fff;color:#665f68;display:grid;place-items:center;padding:0;box-shadow:0 4px 10px rgba(70,40,50,.06)}
+.empty{position:absolute;inset:0;display:grid;place-items:center;padding:30px;text-align:center;color:#8c8790;z-index:1;pointer-events:none;font-size:13px;line-height:1.7}
+@media(max-width:980px){body{overflow:auto} .app{grid-template-columns:1fr;height:auto;min-height:100vh} .sidebar{max-height:40vh} .main{min-height:70vh;padding:10px 0 0} .topbar{padding:0 8px} .stage{min-height:72vh} .board{width:100%;height:100%;border-radius:22px}}
+
+/* Editorial redesign: a quiet, unified color field and precise center-cross geometry. */
+:root { --ink:#2a2d34; --muted:#737781; --line:#e6e6e8; --deep:#34373e; --shadow:0 14px 34px rgba(30,34,44,.055); }
+body { background:#f7f7f8; color:var(--ink); }
+.app { gap:14px; padding:14px; }
+.panel.sidebar { background:#fff; border:1px solid #e8e8ea; border-radius:20px; box-shadow:0 8px 25px rgba(34,37,45,.035); }
+.main { padding:5px 4px 0; }
+.topbar { margin:0 0 12px; padding:6px 5px 0; align-items:center; }
+.topbar h2 { margin:0 0 3px; font-size:19px; font-weight:590; letter-spacing:-.035em; color:#292d34; }
+.topbar p { color:#868791; font-size:12px; line-height:1.35; max-width:690px; }
+.toolbtn { border:1px solid #e2e3e6; border-radius:11px; color:#555963; font-size:12px; font-weight:500; padding:9px 13px; background:rgba(255,255,255,.76); box-shadow:0 1px 1px rgba(30,35,43,.018); }
+.toolbtn:hover { background:#fff; border-color:#c9cbd0; }
+.stage { display:flex; flex:1; min-height:0; padding:0; }
+.board { position:relative; flex:1; width:100%; height:100%; min-height:0; border-radius:24px; overflow:hidden; background:#f4ebef; box-shadow:0 10px 30px rgba(47,47,53,.035); }
+.board::before,.board::after,.quad-overlay { display:none !important; }
+.board-frame { z-index:3; border-radius:24px; box-shadow:inset 0 0 0 1px rgba(40,45,52,.075); }
+.quad-grid { position:absolute; inset:0; display:grid; grid-template-columns:1fr 1fr; grid-template-rows:1fr 1fr; pointer-events:none; z-index:0; }
+.quad { min-width:0; min-height:0; }
+.q-pink { background:#f4e8ed; }
+.q-blue { background:#e8eef5; }
+.q-purple { background:#eee9f3; }
+.q-green { background:#e7eee8; }
+.axis-svg { position:absolute; inset:0; width:100%; height:100%; display:block; z-index:1; pointer-events:none; }
+.axis-svg line { stroke:#555760; stroke-width:1.2; opacity:.72; }
+.axis-svg marker path { fill:#555760; }
+.axis-label { z-index:2; font-family:"Noto Sans SC","PingFang SC","Microsoft YaHei","Source Han Sans SC","Noto Sans CJK SC",system-ui,sans-serif; font-weight:500; color:#383b41 !important; letter-spacing:.09em; text-shadow:none; }
+.axis-label.top { top:23px; font-size:clamp(16px,1.25vw,21px); }
+.axis-label.bottom { bottom:21px; font-size:clamp(16px,1.25vw,21px); }
+.axis-label.left { left:26px; font-size:clamp(15px,1.15vw,19px); }
+.axis-label.right { right:26px; font-size:clamp(15px,1.15vw,19px); }
+.board-hint { color:#777b84; font-size:10.5px; bottom:9px; opacity:.75; }
+.empty { color:#747680; font-size:12px; line-height:1.7; }
+.placed-layer { z-index:5; }
+@media(max-width:980px) { .main{padding:10px 0 0} .stage{min-height:72vh} .board{border-radius:20px} .axis-label.left{left:12px}.axis-label.right{right:12px} }
+
+
+/* v1455: minimal white canvas while retaining free-drag coordinates */
+.board { background:#ffffff; box-shadow:0 10px 30px rgba(39,43,49,.025); }
+.quad-grid .quad { background:#ffffff !important; }
+.board-frame { box-shadow:inset 0 0 0 1px rgba(49,53,61,.065); }
+.axis-svg line { stroke:#b9babd; stroke-width:1; opacity:.75; }
+.axis-svg marker path { fill:#b9babd; }
+.axis-label { color:#3c4047 !important; font-weight:500; }
+.board-hint { color:#a0a2a7; }
+.empty { color:#a7a9ad; }
+
+.mobile-instruction[hidden]{display:none!important}
+/* Mobile adaptation: canvas-first, searchable bottom drawer. */
+.mobile-open,.drawer-handle,.drawer-backdrop,.mobile-instruction{display:none}
+@media(max-width:980px){
+ html,body{height:100%;overflow:hidden}
+ body{background:#fff}
+ .app{height:100dvh;min-height:0;display:block;padding:0;overflow:hidden}
+ .main{height:100dvh;padding:10px 8px max(8px,env(safe-area-inset-bottom));display:flex;flex-direction:column;overflow:hidden}
+ .topbar{flex:0 0 auto;margin:0 0 8px;padding:2px 3px;gap:5px;align-items:center}
+ .topbar h2{font-size:15px;margin:0}
+ .topbar p{display:none}
+ .topbar .btns{gap:4px}
+ .topbar .toolbtn{font-size:10px;padding:7px 8px;border-radius:9px}
+ .mobile-open{display:inline-flex;align-items:center;gap:5px;background:#30353d;color:#fff;border:0;border-radius:10px;padding:9px 11px;font-size:12px;min-height:36px}
+ .stage{flex:1;min-height:0;padding:0;display:flex}
+ .board{height:100%;width:100%;min-height:0;min-width:0;border-radius:14px;flex:1}
+ .board-frame{border-radius:14px}
+ .axis-label.top{top:14px;font-size:13px;letter-spacing:.04em}
+ .axis-label.bottom{bottom:14px;font-size:13px;letter-spacing:.04em}
+ .axis-label.left{left:4px;font-size:12px;letter-spacing:.03em}
+ .axis-label.right{right:4px;font-size:12px;letter-spacing:.03em}
+ .board-hint,.empty{display:none !important}
+ .card{min-width:58px;max-width:112px;gap:3px}
+ .card .avatar{width:47px;height:47px;font-size:12px}
+ .card .name{font-size:10px;line-height:1.1}
+ .card .sub{font-size:9px;line-height:1.1}
+ .card .note{font-size:10px;max-width:104px}
+ .card .note-input{width:118px;font-size:12px;min-height:37px}
+ .card .confirm-note{font-size:18px}
+ .sidebar{position:fixed;z-index:40;left:0;right:0;bottom:0;top:auto;height:min(76dvh,680px);max-height:none!important;border-radius:20px 20px 0 0!important;background:#fff;box-shadow:0 -15px 55px rgba(0,0,0,.17)!important;transform:translateY(105%);transition:transform .25s ease;display:flex;overflow:hidden}
+ .sidebar.is-open{transform:translateY(0)}
+ .drawer-handle{display:block;width:38px;height:4px;background:#d3d4d8;border-radius:99px;margin:10px auto 0}
+ .side-head{padding:9px 18px 11px}
+ .side-head p{font-size:12px}
+ .controls{padding:10px 12px}
+ .list{overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+ .member{touch-action:manipulation;cursor:pointer}
+ .member.is-picked{border-color:#586779;background:#f3f6f9;outline:1px solid #8997a7}
+ .drawer-backdrop{display:none;position:fixed;inset:0;z-index:35;background:rgba(20,24,32,.25)}
+ .drawer-backdrop.is-open{display:block}
+ .mobile-instruction{display:block;position:absolute;left:50%;bottom:40px;transform:translateX(-50%);z-index:8;background:#30353de8;color:#fff;border-radius:20px;padding:9px 13px;font-size:11px;white-space:nowrap;pointer-events:none}
+ .card .tools{top:-11px;right:3px}
+}
+@media(max-width:540px) and (orientation:landscape){.sidebar{height:94dvh}.topbar h2{font-size:13px}.topbar .toolbtn{padding:5px 6px}.topbar{margin-bottom:4px}}
+
+.creator-line{display:flex;align-items:center;gap:10px;padding:0 9px 9px;color:#555963;font-size:12px;flex:0 0 auto}
+.creator-line label{font-weight:600;white-space:nowrap}
+.creator-line input{flex:0 1 280px;min-width:110px;border:1px solid #e1e3e8;background:white;border-radius:9px;padding:8px 11px;font:inherit;color:#343740;outline:none}
+.creator-line input:focus{border-color:#959dab}
+.creator-line span{font-size:11px;color:#a1a2a6}
+@media(max-width:980px){.creator-line{padding:0 4px 7px;gap:7px}.creator-line input{flex:1;max-width:230px;padding:7px 9px}.creator-line span{display:none}}
+
+/* Credits sit in a dedicated footer band below the quadrant frame. */
+.stage{flex-direction:column;}
+.stage>.board{flex:1 1 auto;height:auto;min-height:0;}
+.board-footer{flex:0 0 42px;position:relative;display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;box-sizing:border-box;padding:0 16px;border-top:1px solid #e5e7eb;margin-top:4px;font-family:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;color:rgba(112,112,120,.62);letter-spacing:.025em;pointer-events:none;}
+.board-footer .footer-dept{font-size:13px;font-weight:500;}
+.board-footer .footer-byline{position:static;margin-left:auto;font-size:10px;font-weight:400;color:rgba(112,112,120,.52);}
+@media(max-width:980px){.stage>.board{height:auto;min-height:0}.board-footer{flex-basis:40px;padding:0 11px}.board-footer .footer-dept{font-size:12px}.board-footer .footer-byline{font-size:9px}}
+
+/* One exclusive kami-oshi, drawn with browser-native CSS + SVG (no image asset). */
+.card .oshi-avatar-wrap{position:relative;width:64px;height:64px;flex:none;overflow:visible}
+.card .oshi-avatar-wrap>.avatar{width:100%;height:100%;box-sizing:border-box}
+.card.is-oshi .oshi-avatar-wrap>.avatar{outline:3px solid #e2aa31;outline-offset:1px;box-shadow:0 0 0 1px rgba(255,228,159,.8),0 0 9px rgba(224,168,49,.18)}
+.card.is-oshi.selected .avatar{outline:3px solid #e2aa31}
+.oshi-arc{position:absolute;inset:-12px -12px auto auto;width:calc(100% + 24px);height:calc(100% + 24px);overflow:visible;pointer-events:none;filter:drop-shadow(0 1px 1px rgba(255,255,255,.7))}
+.oshi-arc text{font-family:"Noto Sans SC","PingFang SC","Microsoft YaHei",sans-serif;font-size:22px;font-weight:800;fill:#bd8514;stroke:#fff9e8;stroke-width:2.8px;paint-order:stroke fill;letter-spacing:1px}
+.card .iconbtn.oshi-toggle{width:auto;min-width:56px;border-radius:13px;font-size:11px;font-weight:650;padding:0 7px;white-space:nowrap}
+.card.is-oshi .iconbtn.oshi-toggle{color:#8c6316;border-color:#e5c57b;background:#fff6df}
+@media(max-width:980px){.card .oshi-avatar-wrap{width:47px;height:47px}.oshi-arc{inset:-10px -10px auto auto;width:calc(100% + 20px);height:calc(100% + 20px)}}
+
+/* Stable selection toolbar outside draggable avatars; touch-friendly. */
+.selection-bar[hidden]{display:none!important}
+.selection-bar{display:flex;flex:0 0 auto;align-items:center;gap:8px;min-height:38px;padding:5px 10px;margin:0 8px 8px;border:1px solid #e5e2dc;border-radius:11px;background:#fffdf9;box-shadow:0 2px 9px rgba(40,35,24,.035);font-family:inherit}
+.selection-name{font-size:12px;font-weight:650;color:#555760;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
+.selection-bar button{touch-action:manipulation;white-space:nowrap;border-radius:8px;padding:7px 10px;border:1px solid #e7e2d5;background:white;color:#4b4f55;font-size:12px;cursor:pointer}
+.selection-bar .selection-oshi{border-color:#e1be72;background:#fff8e8;color:#9c6d17;font-weight:700}
+.selection-bar .selection-oshi.is-active{background:#e4ac34;color:#fff;border-color:#cb9829}
+.selection-bar .selection-close{font-size:17px;padding:4px 9px}
+.card .tools .oshi-toggle{display:none!important}
+@media(max-width:980px){.selection-bar{margin:0 4px 6px;padding:4px 6px;gap:4px;min-height:32px}.selection-bar button{padding:6px 7px;font-size:10px}.selection-name{font-size:10px}}
+</style>
+</head>
+<body>
+<div class="drawer-backdrop" id="drawerBackdrop"></div>
+<div class="app">
+  <aside class="panel sidebar" id="mobileDrawer">
+    <div class="drawer-handle"></div>
+    <div class="side-head">
+      
+      <p>选择你愿意观看的主播或直播主，拖进四象限，记录你的观看偏好。</p>
+    </div>
+    <div class="controls">
+      <input id="search" class="search" type="search" placeholder="搜索主播：日文 / English / 中文">
+      <select id="branch" aria-label="所属团体"><option value="all">全部主播</option><option value="NIJISANJI">NIJISANJI</option><option value="VSPO">VSPO!</option><option value="CR">Crazy Raccoon</option><option value="NEO">Neo-Porte</option></select>
+      <select id="status"><option value="all">全部状态</option><option value="placed">只看已放置</option><option value="unplaced">只看未放置</option></select>
+      <div class="actions"><button id="toggleSort">按名称排序</button><button id="help">说明</button></div>
+    </div>
+    <div id="list" class="list"></div>
+  </aside>
+
+  <main class="panel main">
+    <div class="topbar">
+      <div>
+        <h2>观看偏好 · 四象限</h2>
+        <p>选择主播并拖入画布，自由安排位置；点击头像可添加推荐理由。</p>
+      </div>
+      <div class="btns">
+        <button type="button" class="mobile-open" id="mobileOpen">☰ 选主播</button>
+        <button class="toolbtn" id="clear">清空布局</button>
+        <select id="exportRatio" aria-label="导出图片比例" title="选择图片比例" style="border:1px solid #dfe1e5;border-radius:9px;background:#fff;color:#4a4d55;padding:8px 9px;font-size:13px"><option value="portrait">竖版 9:16</option><option value="landscape">横版 4:3</option></select>
+        <button class="toolbtn" id="export">导出图片</button>
+        <button class="toolbtn" id="import">导入布局</button>
+      </div>
+    </div>
+    <div class="creator-line"><label for="creatorName">填表人</label><input id="creatorName" type="text" maxlength="40" placeholder="填写你的名字（可选）" autocomplete="off" aria-label="填表人名字"><span>仅输出四象限区域，不包含左侧名单</span></div>
+    <div id="selectionBar" class="selection-bar" hidden><span id="selectionName" class="selection-name"></span><button type="button" id="selectionOshi" class="selection-oshi">设为神推</button><button type="button" id="selectionEdit" class="selection-edit">编辑理由</button><button type="button" id="selectionClose" class="selection-close" aria-label="取消选中">×</button></div>
+    <div class="stage">
+      <div id="board" class="board">
+        <div class="board-frame"></div>
+        <div class="quad-grid" aria-hidden="true"><div class="quad q-pink"></div><div class="quad q-blue"></div><div class="quad q-purple"></div><div class="quad q-green"></div></div>
+        
+        <svg class="axis-svg" viewBox="0 0 1000 760" preserveAspectRatio="none" aria-hidden="true">
+          <defs>
+            <marker id="arrowEnd" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto">
+              <path d="M0,0 L8,4 L0,8 z" fill="#555760"></path>
+            </marker>
+          </defs>
+          <line x1="500" y1="54" x2="500" y2="706" stroke="#555760" stroke-width="1.2" marker-start="url(#arrowEnd)" marker-end="url(#arrowEnd)"/>
+          <line x1="70" y1="380" x2="930" y2="380" stroke="#555760" stroke-width="1.2" marker-start="url(#arrowEnd)" marker-end="url(#arrowEnd)"/>
+        </svg>
+        <div class="axis-label top">好看爱看</div>
+        <div class="axis-label bottom">有空看看</div>
+        <div class="axis-label left">占有欲大爆发</div>
+        <div class="axis-label right">都给我看</div>
+        <div id="empty" class="empty">把左侧主播卡拖到这里开始排布。<br>放进去以后可以在四象限上任意拖动到你想要的位置。</div>
+        <div id="placed" class="placed-layer"></div>
+        <div class="mobile-instruction" id="mobileInstruction" hidden>点击画布放置所选主播</div>
+        <div class="board-hint">提示：按住头像自由拖动位置；点击头像可编辑推荐理由。</div>
+      </div>
+      <div class="board-footer" aria-hidden="true"><span class="footer-dept">篮子采购部</span><span class="footer-byline">Made by 鸡扒</span></div>
+    </div>
+  </main>
+</div>
+
+<script>
+const MEMBERS = [
+  {
+    "id": "jp-1",
+    "branch": "JP",
+    "jp": "愛園愛美",
+    "en": "Aizono Manami",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "jp-2",
+    "branch": "JP",
+    "jp": "赤城ウェン",
+    "en": "Akagi Wen",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "jp-3",
+    "branch": "JP",
+    "jp": "赤羽葉子",
+    "en": "Akabane Youko",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "jp-4",
+    "branch": "JP",
+    "jp": "明楽レイ",
+    "en": "Akira Ray",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "jp-5",
+    "branch": "JP",
+    "jp": "飛鳥ひな",
+    "en": "Asuka Hina",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "jp-6",
+    "branch": "JP",
+    "jp": "天ヶ瀬むゆ",
+    "en": "Amagase Muyu",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "jp-7",
+    "branch": "JP",
+    "jp": "天宮こころ",
+    "en": "Amamiya Kokoro",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "jp-8",
+    "branch": "JP",
+    "jp": "雨森小夜",
+    "en": "Amemori Sayo",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "jp-9",
+    "branch": "JP",
+    "jp": "アルス・アルマル",
+    "en": "Ars Almal",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "jp-10",
+    "branch": "JP",
+    "jp": "アンジュ・カトリーナ",
+    "en": "Ange Katrina",
+    "cn": "安洁·卡特莉娜",
+    "aliases": []
+  },
+  {
+    "id": "jp-11",
+    "branch": "JP",
+    "jp": "イ ロハ",
+    "en": "Lee Roha",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "jp-12",
+    "branch": "JP",
+    "jp": "家長むぎ",
+    "en": "Ienaga Mugi",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "jp-13",
+    "branch": "JP",
+    "jp": "五十嵐梨花",
+    "en": "Igarashi Rika",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "jp-14",
+    "branch": "JP",
+    "jp": "石神のぞみ",
+    "en": "Ishigami Nozomi",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "jp-15",
+    "branch": "JP",
+    "jp": "五木左京",
+    "en": "Itsuki Sakyo",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "jp-16",
+    "branch": "JP",
+    "jp": "伊波ライ",
+    "en": "Inami Rai",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "jp-17",
+    "branch": "JP",
+    "jp": "戌亥とこ",
+    "en": "Inui Toko",
+    "cn": "戌亥床",
+    "aliases": []
+  },
+  {
+    "id": "jp-18",
+    "branch": "JP",
+    "jp": "イブラヒム",
+    "en": "Ibrahim",
+    "cn": "易卜拉欣",
+    "aliases": []
+  },
+  {
+    "id": "jp-19",
+    "branch": "JP",
+    "jp": "宇佐美リト",
+    "en": "Usami Rito",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "jp-20",
+    "branch": "JP",
+    "jp": "宇志海いちご",
+    "en": "Ushimi Ichigo",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "jp-21",
+    "branch": "JP",
+    "jp": "卯月コウ",
+    "en": "Uzuki Kou",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "jp-22",
+    "branch": "JP",
+    "jp": "海妹四葉",
+    "en": "Umise Yotsuha",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "jp-23",
+    "branch": "JP",
+    "jp": "エクス・アルビオ",
+    "en": "Ex Albio",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "jp-24",
+    "branch": "JP",
+    "jp": "エトナ クリムソン",
+    "en": "Etna Crimson",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "jp-25",
+    "branch": "JP",
+    "jp": "えま★おうがすと",
+    "en": "Emma August",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "jp-26",
+    "branch": "JP",
+    "jp": "エリー・コニファー",
+    "en": "Eli Conifer",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "jp-27",
+    "branch": "JP",
+    "jp": "える",
+    "en": "Elu",
+    "cn": "艾露",
+    "aliases": []
+  },
+  {
+    "id": "jp-28",
+    "branch": "JP",
+    "jp": "オ ジユ",
+    "en": "Oh Jiyu",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "jp-29",
+    "branch": "JP",
+    "jp": "男虎",
+    "en": "Onotora",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "jp-30",
+    "branch": "JP",
+    "jp": "オリバー・エバンス",
+    "en": "Oliver Evans",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "jp-31",
+    "branch": "JP",
+    "jp": "魁星",
+    "en": "Kaisei",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "jp-32",
+    "branch": "JP",
+    "jp": "甲斐田晴",
+    "en": "Kaida Haru",
+    "cn": "甲斐田晴",
+    "aliases": []
+  },
+  {
+    "id": "jp-33",
+    "branch": "JP",
+    "jp": "加賀美ハヤト",
+    "en": "Kagami Hayato",
+    "cn": "加贺美隼人",
+    "aliases": []
+  },
+  {
+    "id": "jp-34",
+    "branch": "JP",
+    "jp": "語部紡",
+    "en": "Kataribe Tsumugu",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "jp-35",
+    "branch": "JP",
+    "jp": "蝸堂みかる",
+    "en": "Kadou Mikaru",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "jp-36",
+    "branch": "JP",
+    "jp": "叶",
+    "en": "Kanae",
+    "cn": "叶",
+    "aliases": [
+      "kanae"
+    ]
+  },
+  {
+    "id": "jp-37",
+    "branch": "JP",
+    "jp": "鏑木ろこ",
+    "en": "Kaburaki Roco",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "jp-38",
+    "branch": "JP",
+    "jp": "神永タイガ",
+    "en": "Kaminaga Taiga",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "jp-39",
+    "branch": "JP",
+    "jp": "神田笑一",
+    "en": "Kanda Shoichi",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "jp-40",
+    "branch": "JP",
+    "jp": "ガオン",
+    "en": "Gaon",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "jp-41",
+    "branch": "JP",
+    "jp": "綺沙良",
+    "en": "Kisara",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "jp-42",
+    "branch": "JP",
+    "jp": "北小路ヒスイ",
+    "en": "Kitakoji Hisui",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "jp-43",
+    "branch": "JP",
+    "jp": "北見遊征",
+    "en": "Kitami Yusei",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "jp-44",
+    "branch": "JP",
+    "jp": "雲母たまこ",
+    "en": "Kirara Tamako",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "jp-45",
+    "branch": "JP",
+    "jp": "ギルザレンⅢ世",
+    "en": "Gilzaren III",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "jp-46",
+    "branch": "JP",
+    "jp": "葛葉",
+    "en": "Kuzuha",
+    "cn": "葛叶",
+    "aliases": [
+      "kuzuha"
+    ]
+  },
+  {
+    "id": "jp-47",
+    "branch": "JP",
+    "jp": "倉持めると",
+    "en": "Kuramochi Meruto",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "jp-48",
+    "branch": "JP",
+    "jp": "九里詠太",
+    "en": "Kuri Eita",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "jp-49",
+    "branch": "JP",
+    "jp": "来栖夏芽",
+    "en": "Kurusu Natsume",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "jp-50",
+    "branch": "JP",
+    "jp": "黒井しば",
+    "en": "Kuroi Shiba",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "jp-51",
+    "branch": "JP",
+    "jp": "剣持刀也",
+    "en": "Kenmochi Toya",
+    "cn": "剑持刀也",
+    "aliases": []
+  },
+  {
+    "id": "jp-52",
+    "branch": "JP",
+    "jp": "弦月藤士郎",
+    "en": "Genzuki Tojiro",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "jp-53",
+    "branch": "JP",
+    "jp": "小々波いるか",
+    "en": "Kokonami Iruka",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "jp-54",
+    "branch": "JP",
+    "jp": "小清水透",
+    "en": "Koshimizu Toru",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "jp-55",
+    "branch": "JP",
+    "jp": "梢桃音",
+    "en": "Kozue Mone",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "jp-56",
+    "branch": "JP",
+    "jp": "小柳ロウ",
+    "en": "Koyanagi Rou",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "jp-57",
+    "branch": "JP",
+    "jp": "佐伯イッテツ",
+    "en": "Saiki Ittetsu",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "jp-58",
+    "branch": "JP",
+    "jp": "三枝明那",
+    "en": "Saegusa Akina",
+    "cn": "三枝明那",
+    "aliases": []
+  },
+  {
+    "id": "jp-59",
+    "branch": "JP",
+    "jp": "早乙女ベリー",
+    "en": "Saotome Berry",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "jp-60",
+    "branch": "JP",
+    "jp": "榊ネス",
+    "en": "Sakaki Ness",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "jp-61",
+    "branch": "JP",
+    "jp": "酒寄颯馬",
+    "en": "Sakayori Soma",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "jp-62",
+    "branch": "JP",
+    "jp": "桜凛月",
+    "en": "Sakura Ritsuki",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "jp-63",
+    "branch": "JP",
+    "jp": "笹木咲",
+    "en": "Sasaki Saku",
+    "cn": "笹木咲",
+    "aliases": []
+  },
+  {
+    "id": "jp-64",
+    "branch": "JP",
+    "jp": "椎名唯華",
+    "en": "Shiina Yuika",
+    "cn": "椎名唯华",
+    "aliases": []
+  },
+  {
+    "id": "jp-65",
+    "branch": "JP",
+    "jp": "シェリン・バーガンディ",
+    "en": "Shellin Burgundy",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "jp-66",
+    "branch": "JP",
+    "jp": "栞葉るり",
+    "en": "Shioriha Ruri",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "jp-67",
+    "branch": "JP",
+    "jp": "司賀りこ",
+    "en": "Shiga Riko",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "jp-68",
+    "branch": "JP",
+    "jp": "四季凪アキラ",
+    "en": "Shikinagi Akira",
+    "cn": "四季凪明乐",
+    "aliases": []
+  },
+  {
+    "id": "jp-69",
+    "branch": "JP",
+    "jp": "獅子堂あかり",
+    "en": "Shishido Akari",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "jp-70",
+    "branch": "JP",
+    "jp": "シスター・クレア",
+    "en": "Sister Claire",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "jp-71",
+    "branch": "JP",
+    "jp": "静凛",
+    "en": "Shizuka Rin",
+    "cn": "静凛",
+    "aliases": []
+  },
+  {
+    "id": "jp-72",
+    "branch": "JP",
+    "jp": "篠宮ゆの",
+    "en": "Shinomiya Yuno",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "jp-73",
+    "branch": "JP",
+    "jp": "渋谷ハジメ",
+    "en": "Shibuya Hajime",
+    "cn": "涩谷初",
+    "aliases": []
+  },
+  {
+    "id": "jp-74",
+    "branch": "JP",
+    "jp": "白砂あやね",
+    "en": "Shirasa Ayane",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "jp-75",
+    "branch": "JP",
+    "jp": "白雪巴",
+    "en": "Shirayuki Tomoe",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "jp-76",
+    "branch": "JP",
+    "jp": "城瀬いすみ",
+    "en": "Shirose Isumi",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "jp-77",
+    "branch": "JP",
+    "jp": "ジョー・力一",
+    "en": "Joe Rikiichi",
+    "cn": "小丑力一",
+    "aliases": []
+  },
+  {
+    "id": "jp-78",
+    "branch": "JP",
+    "jp": "周央サンゴ",
+    "en": "Suo Sango",
+    "cn": "周央珊瑚",
+    "aliases": []
+  },
+  {
+    "id": "jp-79",
+    "branch": "JP",
+    "jp": "健屋花那",
+    "en": "Sukoya Kana",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "jp-80",
+    "branch": "JP",
+    "jp": "鈴木勝",
+    "en": "Suzuki Masaru",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "jp-81",
+    "branch": "JP",
+    "jp": "鈴原るる",
+    "en": "Suzuhara Lulu",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "jp-82",
+    "branch": "JP",
+    "jp": "皇れお",
+    "en": "Sumeragi Reo",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "jp-83",
+    "branch": "JP",
+    "jp": "セフィナ",
+    "en": "Seffyna",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "jp-84",
+    "branch": "JP",
+    "jp": "セラフ・ダズルガーデン",
+    "en": "Seraph Dazzlegarden",
+    "cn": "瑟拉夫·黛兹尔花园",
+    "aliases": []
+  },
+  {
+    "id": "jp-85",
+    "branch": "JP",
+    "jp": "千凛あゆむ",
+    "en": "Senri Ayumu",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "jp-86",
+    "branch": "JP",
+    "jp": "ソ ナギ",
+    "en": "So Nagi",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "jp-87",
+    "branch": "JP",
+    "jp": "ソフィア・ヴァレンタイン",
+    "en": "Sophia Valentine",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "jp-88",
+    "branch": "JP",
+    "jp": "空星きらめ",
+    "en": "Sorahoshi Kirame",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "jp-89",
+    "branch": "JP",
+    "jp": "鷹宮リオン",
+    "en": "Takamiya Rion",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "jp-90",
+    "branch": "JP",
+    "jp": "立伝都々",
+    "en": "Tachitsute Toto",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "jp-91",
+    "branch": "JP",
+    "jp": "珠乃井ナナ",
+    "en": "Tamanoi Nana",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "jp-92",
+    "branch": "JP",
+    "jp": "塚原大地",
+    "en": "Tsukahara Daichi",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "jp-93",
+    "branch": "JP",
+    "jp": "月ノ美兎",
+    "en": "Tsukino Mito",
+    "cn": "月之美兔",
+    "aliases": [
+      "委员长"
+    ]
+  },
+  {
+    "id": "jp-94",
+    "branch": "JP",
+    "jp": "でびでび・でびる",
+    "en": "Debidebi Debiru",
+    "cn": "小恶魔/でび様",
+    "aliases": []
+  },
+  {
+    "id": "jp-95",
+    "branch": "JP",
+    "jp": "デレム カド",
+    "en": "Derem Kado",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "jp-96",
+    "branch": "JP",
+    "jp": "東堂コハク",
+    "en": "Todo Kohaku",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "jp-97",
+    "branch": "JP",
+    "jp": "十河ののは",
+    "en": "Togawa Nonoha",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "jp-98",
+    "branch": "JP",
+    "jp": "轟京子",
+    "en": "Todoroki Kyoko",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "jp-99",
+    "branch": "JP",
+    "jp": "ドーラ",
+    "en": "Dola",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "jp-100",
+    "branch": "JP",
+    "jp": "ナ セラ",
+    "en": "Na Sera",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "jp-101",
+    "branch": "JP",
+    "jp": "長尾景",
+    "en": "Nagao Kei",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "jp-102",
+    "branch": "JP",
+    "jp": "ナギサ アルシニア",
+    "en": "Nagisa Arcinia",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "jp-103",
+    "branch": "JP",
+    "jp": "渚トラウト",
+    "en": "Nagisa Trout",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "jp-104",
+    "branch": "JP",
+    "jp": "七瀬すず菜",
+    "en": "Nanase Suzuna",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "jp-105",
+    "branch": "JP",
+    "jp": "西園チグサ",
+    "en": "Nishizono Chigusa",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "jp-106",
+    "branch": "JP",
+    "jp": "ニュイ・ソシエール",
+    "en": "Nui Sociere",
+    "cn": "纽伊·索希艾尔",
+    "aliases": []
+  },
+  {
+    "id": "jp-107",
+    "branch": "JP",
+    "jp": "猫屋敷美紅",
+    "en": "Nekoyashiki Miku",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "jp-108",
+    "branch": "JP",
+    "jp": "ハ ユン",
+    "en": "Ha Yun",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "jp-109",
+    "branch": "JP",
+    "jp": "葉加瀬冬雪",
+    "en": "Hakase Fuyuki",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "jp-110",
+    "branch": "JP",
+    "jp": "ハナ マキア",
+    "en": "Hana Macchia",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "jp-111",
+    "branch": "JP",
+    "jp": "花籠つばさ",
+    "en": "Hanakago Tsubasa",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "jp-112",
+    "branch": "JP",
+    "jp": "花畑チャイカ",
+    "en": "Hanabatake Chaika",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "jp-113",
+    "branch": "JP",
+    "jp": "早瀬走",
+    "en": "Hayase Sou",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "jp-114",
+    "branch": "JP",
+    "jp": "葉山舞鈴",
+    "en": "Hayama Marin",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "jp-115",
+    "branch": "JP",
+    "jp": "春崎エアル",
+    "en": "Harusaki Air",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "jp-116",
+    "branch": "JP",
+    "jp": "樋口楓",
+    "en": "Higuchi Kaede",
+    "cn": "樋口枫",
+    "aliases": []
+  },
+  {
+    "id": "jp-117",
+    "branch": "JP",
+    "jp": "一橋綾人",
+    "en": "Hitotsubashi Ayato",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "jp-118",
+    "branch": "JP",
+    "jp": "緋八マナ",
+    "en": "Hibachi Mana",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "jp-119",
+    "branch": "JP",
+    "jp": "壱百満天原サロメ",
+    "en": "Hyakumantenbara Salome",
+    "cn": "壹百满天原莎乐美",
+    "aliases": []
+  },
+  {
+    "id": "jp-120",
+    "branch": "JP",
+    "jp": "風楽奏斗",
+    "en": "Fura Kanato",
+    "cn": "风乐奏斗",
+    "aliases": []
+  },
+  {
+    "id": "jp-121",
+    "branch": "JP",
+    "jp": "伏見ガク",
+    "en": "Fushimi Gaku",
+    "cn": "伏见学",
+    "aliases": []
+  },
+  {
+    "id": "jp-122",
+    "branch": "JP",
+    "jp": "フミ",
+    "en": "Fumi",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "jp-123",
+    "branch": "JP",
+    "jp": "文野環",
+    "en": "Fumino Tamaki",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "jp-124",
+    "branch": "JP",
+    "jp": "フレン・E・ルスタリオ",
+    "en": "Furen E Lustario",
+    "cn": "芙莲·E·露丝塔莉欧",
+    "aliases": []
+  },
+  {
+    "id": "jp-125",
+    "branch": "JP",
+    "jp": "不破湊",
+    "en": "Fuwa Minato",
+    "cn": "不破凑",
+    "aliases": []
+  },
+  {
+    "id": "jp-126",
+    "branch": "JP",
+    "jp": "ぷりん・らら・もーど",
+    "en": "Purin Lala Mode",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "jp-127",
+    "branch": "JP",
+    "jp": "ベルモンド・バンデラス",
+    "en": "Belmond Banderas",
+    "cn": "贝尔蒙德·班德拉斯",
+    "aliases": []
+  },
+  {
+    "id": "jp-128",
+    "branch": "JP",
+    "jp": "星川サラ",
+    "en": "Hoshikawa Sara",
+    "cn": "星川莎拉",
+    "aliases": []
+  },
+  {
+    "id": "jp-129",
+    "branch": "JP",
+    "jp": "星導ショウ",
+    "en": "Hoshirube Sho",
+    "cn": "星导翔",
+    "aliases": []
+  },
+  {
+    "id": "jp-130",
+    "branch": "JP",
+    "jp": "本間ひまわり",
+    "en": "Honma Himawari",
+    "cn": "本间向日葵",
+    "aliases": []
+  },
+  {
+    "id": "jp-131",
+    "branch": "JP",
+    "jp": "ぽめろ・ぱんち",
+    "en": "Pomelo Punch",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "jp-132",
+    "branch": "JP",
+    "jp": "先斗寧",
+    "en": "Ponto Nei",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "jp-133",
+    "branch": "JP",
+    "jp": "舞元啓介",
+    "en": "Maimoto Keisuke",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "jp-134",
+    "branch": "JP",
+    "jp": "魔界ノりりむ",
+    "en": "Makaino Ririmu",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "jp-135",
+    "branch": "JP",
+    "jp": "ましろ爻",
+    "en": "Mashiro Meme",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "jp-136",
+    "branch": "JP",
+    "jp": "町田ちま",
+    "en": "Machita Chima",
+    "cn": "町田千麻",
+    "aliases": []
+  },
+  {
+    "id": "jp-137",
+    "branch": "JP",
+    "jp": "魔使マオ",
+    "en": "Matsukai Mao",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "jp-138",
+    "branch": "JP",
+    "jp": "御子神琴音",
+    "en": "Mikogami Kotone",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "jp-139",
+    "branch": "JP",
+    "jp": "水面まどか",
+    "en": "Minamo Madoka",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "jp-140",
+    "branch": "JP",
+    "jp": "ミラン・ケストレル",
+    "en": "Milan Kestrel",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "jp-141",
+    "branch": "JP",
+    "jp": "ミン スゥーハ",
+    "en": "Min Suha",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "jp-142",
+    "branch": "JP",
+    "jp": "叢雲カゲツ",
+    "en": "Murakumo Kagetsu",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "jp-143",
+    "branch": "JP",
+    "jp": "モイラ",
+    "en": "Moira",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "jp-144",
+    "branch": "JP",
+    "jp": "物述有栖",
+    "en": "Mononobe Alice",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "jp-145",
+    "branch": "JP",
+    "jp": "森中花咲",
+    "en": "Morinaka Kazaki",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "jp-146",
+    "branch": "JP",
+    "jp": "夜牛詩乃",
+    "en": "Yagyu Shino",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "jp-147",
+    "branch": "JP",
+    "jp": "矢車りね",
+    "en": "Yaguruma Rine",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "jp-148",
+    "branch": "JP",
+    "jp": "社築",
+    "en": "Yashiro Kizuku",
+    "cn": "社筑",
+    "aliases": []
+  },
+  {
+    "id": "jp-149",
+    "branch": "JP",
+    "jp": "山神カルタ",
+    "en": "Yamagami Karuta",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "jp-150",
+    "branch": "JP",
+    "jp": "山田龍一郎",
+    "en": "Yamada Ryuichiro",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "jp-151",
+    "branch": "JP",
+    "jp": "ヤン ナリ",
+    "en": "Yang Nari",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "jp-152",
+    "branch": "JP",
+    "jp": "夕陽リリ",
+    "en": "Yuhi Riri",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "jp-153",
+    "branch": "JP",
+    "jp": "雪城眞尋",
+    "en": "Yukishiro Mahiro",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "jp-154",
+    "branch": "JP",
+    "jp": "夢月ロア",
+    "en": "Yuzuki Roa",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "jp-155",
+    "branch": "JP",
+    "jp": "夢追翔",
+    "en": "Yumeoi Kakeru",
+    "cn": "梦追翔",
+    "aliases": []
+  },
+  {
+    "id": "jp-156",
+    "branch": "JP",
+    "jp": "夜見れな",
+    "en": "Yorumi Rena",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "jp-157",
+    "branch": "JP",
+    "jp": "ライ ガリレイ",
+    "en": "Rai Galilei",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "jp-158",
+    "branch": "JP",
+    "jp": "ライラ アルストロエメリア",
+    "en": "Layla Alstroemeria",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "jp-159",
+    "branch": "JP",
+    "jp": "ラトナ・プティ",
+    "en": "Ratna Petit",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "jp-160",
+    "branch": "JP",
+    "jp": "リゼ・ヘルエスタ",
+    "en": "Lize Helesta",
+    "cn": "莉泽·赫露艾斯塔",
+    "aliases": []
+  },
+  {
+    "id": "jp-161",
+    "branch": "JP",
+    "jp": "リュ ハリ",
+    "en": "Ryu Hari",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "jp-162",
+    "branch": "JP",
+    "jp": "緑仙",
+    "en": "Ryushen",
+    "cn": "绿仙",
+    "aliases": []
+  },
+  {
+    "id": "jp-163",
+    "branch": "JP",
+    "jp": "竜胆尊",
+    "en": "Rindou Mikoto",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "jp-164",
+    "branch": "JP",
+    "jp": "ルイス・キャミー",
+    "en": "Luis Cammy",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "jp-165",
+    "branch": "JP",
+    "jp": "ルンルン",
+    "en": "Lunlun",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "jp-166",
+    "branch": "JP",
+    "jp": "Rei7",
+    "en": "Reina",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "jp-167",
+    "branch": "JP",
+    "jp": "レイン・パターソン",
+    "en": "Lain Paterson",
+    "cn": "蕾茵·帕特森",
+    "aliases": []
+  },
+  {
+    "id": "jp-168",
+    "branch": "JP",
+    "jp": "レオス・ヴィンセント",
+    "en": "Leos Vincent",
+    "cn": "雷欧斯·文森特",
+    "aliases": []
+  },
+  {
+    "id": "jp-169",
+    "branch": "JP",
+    "jp": "レヨン",
+    "en": "Rayon",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "jp-170",
+    "branch": "JP",
+    "jp": "レヴィ・エリファ",
+    "en": "Levi Elipha",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "jp-171",
+    "branch": "JP",
+    "jp": "ローレン・イロアス",
+    "en": "Lauren Iroas",
+    "cn": "劳伦·伊罗亚斯",
+    "aliases": []
+  },
+  {
+    "id": "jp-172",
+    "branch": "JP",
+    "jp": "渡会雲雀",
+    "en": "Watarai Hibari",
+    "cn": "渡会云雀",
+    "aliases": []
+  },
+  {
+    "id": "en-1",
+    "branch": "EN",
+    "jp": "アイア アマレ",
+    "en": "Aia Amare",
+    "cn": "Aia Amare",
+    "aliases": []
+  },
+  {
+    "id": "en-2",
+    "branch": "EN",
+    "jp": "アルバーン・ノックス",
+    "en": "Alban Knox",
+    "cn": "Alban Knox",
+    "aliases": []
+  },
+  {
+    "id": "en-3",
+    "branch": "EN",
+    "jp": "浮奇・ヴィオレタ",
+    "en": "Uki Violeta",
+    "cn": "浮奇·紫罗兰",
+    "aliases": []
+  },
+  {
+    "id": "en-4",
+    "branch": "EN",
+    "jp": "エナー・アールウェット",
+    "en": "Enna Alouette",
+    "cn": "Enna Alouette",
+    "aliases": []
+  },
+  {
+    "id": "en-5",
+    "branch": "EN",
+    "jp": "エリーラ ペンドラ",
+    "en": "Elira Pendora",
+    "cn": "艾莉拉·彭朵拉",
+    "aliases": []
+  },
+  {
+    "id": "en-6",
+    "branch": "EN",
+    "jp": "ヴェザリウス バンデージ",
+    "en": "Vezalius Bandage",
+    "cn": "Vezalius Bandage",
+    "aliases": []
+  },
+  {
+    "id": "en-7",
+    "branch": "EN",
+    "jp": "ヴェール ヴァーミリオン",
+    "en": "Ver Vermillion",
+    "cn": "Ver Vermillion",
+    "aliases": []
+  },
+  {
+    "id": "en-8",
+    "branch": "EN",
+    "jp": "ヴォックス・アクマ",
+    "en": "Vox Akuma",
+    "cn": "沃克斯·阿库玛",
+    "aliases": []
+  },
+  {
+    "id": "en-9",
+    "branch": "EN",
+    "jp": "狂蘭 メロコ",
+    "en": "Meloco Kyoran",
+    "cn": "Meloco Kyoran",
+    "aliases": []
+  },
+  {
+    "id": "en-10",
+    "branch": "EN",
+    "jp": "クララ チャームウッド",
+    "en": "Klara Charmwood",
+    "cn": "Klara Charmwood",
+    "aliases": []
+  },
+  {
+    "id": "en-11",
+    "branch": "EN",
+    "jp": "クロード クローマーク",
+    "en": "Claude Clawmark",
+    "cn": "Claude Clawmark",
+    "aliases": []
+  },
+  {
+    "id": "en-12",
+    "branch": "EN",
+    "jp": "ケイリクス・デボネア",
+    "en": "Kaelix Debonair",
+    "cn": "Caelix Debonair",
+    "aliases": [
+      "Caelix Debonair"
+    ]
+  },
+  {
+    "id": "en-13",
+    "branch": "EN",
+    "jp": "サニー・ブリスコー",
+    "en": "Sonny Brisko",
+    "cn": "桑尼·布里斯科",
+    "aliases": []
+  },
+  {
+    "id": "en-14",
+    "branch": "EN",
+    "jp": "ジール・ギンジョウカ",
+    "en": "Zeal Ginjoka",
+    "cn": "Zeal Ginjoka",
+    "aliases": []
+  },
+  {
+    "id": "en-15",
+    "branch": "EN",
+    "jp": "スカーレ ヨナグニ",
+    "en": "Scarle Yonaguni",
+    "cn": "Scarle Yonaguni",
+    "aliases": []
+  },
+  {
+    "id": "en-16",
+    "branch": "EN",
+    "jp": "セイブル",
+    "en": "Seible",
+    "cn": "Sable",
+    "aliases": [
+      "Sable"
+    ]
+  },
+  {
+    "id": "en-17",
+    "branch": "EN",
+    "jp": "ドッピオ ドロップサイト",
+    "en": "Doppio Dropscythe",
+    "cn": "Doppio Dropscythe",
+    "aliases": []
+  },
+  {
+    "id": "en-18",
+    "branch": "EN",
+    "jp": "フィナーナ 竜宮",
+    "en": "Finana Ryugu",
+    "cn": "Finana Ryugu",
+    "aliases": []
+  },
+  {
+    "id": "en-19",
+    "branch": "EN",
+    "jp": "フリオドール",
+    "en": "Freodore",
+    "cn": "Fulgur Ovid",
+    "aliases": [
+      "Fulgur Ovid"
+    ]
+  },
+  {
+    "id": "en-20",
+    "branch": "EN",
+    "jp": "ベンタクロウ ブリンガー",
+    "en": "Vantacrow Bringer",
+    "cn": "Vantacrow Bringer",
+    "aliases": []
+  },
+  {
+    "id": "en-21",
+    "branch": "EN",
+    "jp": "ペトラ グリン",
+    "en": "Petra Gurin",
+    "cn": "佩特拉·古林",
+    "aliases": []
+  },
+  {
+    "id": "en-22",
+    "branch": "EN",
+    "jp": "マリア マリオネット",
+    "en": "Maria Marionette",
+    "cn": "Maria Marionette",
+    "aliases": []
+  },
+  {
+    "id": "en-23",
+    "branch": "EN",
+    "jp": "ミリー・パフェ",
+    "en": "Millie Parfait",
+    "cn": "米莉·帕菲",
+    "aliases": []
+  },
+  {
+    "id": "en-24",
+    "branch": "EN",
+    "jp": "闇ノシュウ",
+    "en": "Shu Yamino",
+    "cn": "闇之修",
+    "aliases": []
+  },
+  {
+    "id": "en-25",
+    "branch": "EN",
+    "jp": "ユウ Q ウィルソン",
+    "en": "Yu Q. Wilson",
+    "cn": "Yu Q. Wilson",
+    "aliases": []
+  },
+  {
+    "id": "en-26",
+    "branch": "EN",
+    "jp": "凉舞 バレンウォート",
+    "en": "Ryoma Barrenwort",
+    "cn": "Ryoma Barrenwort",
+    "aliases": []
+  },
+  {
+    "id": "en-27",
+    "branch": "EN",
+    "jp": "ルカ・カネシロ",
+    "en": "Luca Kaneshiro",
+    "cn": "卢卡·卡内希罗",
+    "aliases": []
+  },
+  {
+    "id": "en-28",
+    "branch": "EN",
+    "jp": "レン ゾット",
+    "en": "Ren Zotto",
+    "cn": "Ren Zotto",
+    "aliases": []
+  },
+  {
+    "id": "vspo-1",
+    "branch": "VSPO",
+    "jp": "花芽すみれ",
+    "en": "Sumire Kaga",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "vspo-2",
+    "branch": "VSPO",
+    "jp": "花芽なずな",
+    "en": "Nazuna Kaga",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "vspo-3",
+    "branch": "VSPO",
+    "jp": "小雀とと",
+    "en": "Toto Kogara",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "vspo-4",
+    "branch": "VSPO",
+    "jp": "一ノ瀬うるは",
+    "en": "Uruha Ichinose",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "vspo-5",
+    "branch": "VSPO",
+    "jp": "胡桃のあ",
+    "en": "Noah Kurumi",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "vspo-6",
+    "branch": "VSPO",
+    "jp": "兎咲ミミ",
+    "en": "Mimi Tosaki",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "vspo-7",
+    "branch": "VSPO",
+    "jp": "空澄セナ",
+    "en": "Sena Asumi",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "vspo-8",
+    "branch": "VSPO",
+    "jp": "橘ひなの",
+    "en": "Hinano Tachibana",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "vspo-9",
+    "branch": "VSPO",
+    "jp": "英リサ",
+    "en": "Lisa Hanabusa",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "vspo-10",
+    "branch": "VSPO",
+    "jp": "如月れん",
+    "en": "Ren Kisaragi",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "vspo-11",
+    "branch": "VSPO",
+    "jp": "神成きゅぴ",
+    "en": "Qpi Kaminari",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "vspo-12",
+    "branch": "VSPO",
+    "jp": "八雲べに",
+    "en": "Beni Yakumo",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "vspo-13",
+    "branch": "VSPO",
+    "jp": "藍沢エマ",
+    "en": "Ema Aizawa",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "vspo-14",
+    "branch": "VSPO",
+    "jp": "紫宮るな",
+    "en": "Runa Shinomiya",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "vspo-15",
+    "branch": "VSPO",
+    "jp": "猫汰つな",
+    "en": "Tsuna Nekota",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "vspo-16",
+    "branch": "VSPO",
+    "jp": "白波らむね",
+    "en": "Ramune Shiranami",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "vspo-17",
+    "branch": "VSPO",
+    "jp": "小森めと",
+    "en": "Met Komori",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "vspo-18",
+    "branch": "VSPO",
+    "jp": "夢野あかり",
+    "en": "Akari Yumeno",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "vspo-19",
+    "branch": "VSPO",
+    "jp": "夜乃くろむ",
+    "en": "Kuromu Yano",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "vspo-20",
+    "branch": "VSPO",
+    "jp": "紡木こかげ",
+    "en": "Kokage Tsumugi",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "vspo-21",
+    "branch": "VSPO",
+    "jp": "千燈ゆうひ",
+    "en": "Yuuhi Sendo",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "vspo-22",
+    "branch": "VSPO",
+    "jp": "蝶屋はなび",
+    "en": "Hanabi Choya",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "vspo-23",
+    "branch": "VSPO",
+    "jp": "甘結もか",
+    "en": "Moka Amayui",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "vspo-24",
+    "branch": "VSPO",
+    "jp": "銀城サイネ",
+    "en": "Saine Ginjo",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "vspo-25",
+    "branch": "VSPO",
+    "jp": "龍巻ちせ",
+    "en": "Chise Tatsumaki",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "vspo-26",
+    "branch": "VSPO",
+    "jp": "青月レミア",
+    "en": "Remia Aotsuki",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "vspo-27",
+    "branch": "VSPO",
+    "jp": "黒刃アリヤ",
+    "en": "Arya Kuroha",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "vspo-28",
+    "branch": "VSPO",
+    "jp": "地崎ジラ",
+    "en": "Jira Jisaki",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "vspo-29",
+    "branch": "VSPO",
+    "jp": "美暮ナリン",
+    "en": "Narin Mikure",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "vspo-30",
+    "branch": "VSPO",
+    "jp": "ソラリリコ",
+    "en": "Riko Solari",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "vspo-31",
+    "branch": "VSPO",
+    "jp": "涼上エリス",
+    "en": "Eris Suzukami",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "vspo-32",
+    "branch": "VSPO",
+    "jp": "梅園ジュノ",
+    "en": "Juno Umezono",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "cr-1",
+    "branch": "CR",
+    "jp": "ANS",
+    "en": "ANS",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "cr-12",
+    "branch": "CR",
+    "jp": "RIGZE",
+    "en": "RIGZE",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "cr-23",
+    "branch": "CR",
+    "jp": "Akami Karubi",
+    "en": "Akami Karubi",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "cr-24",
+    "branch": "CR",
+    "jp": "tototMix",
+    "en": "tototMix",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "cr-37",
+    "branch": "CR",
+    "jp": "GocChaNMikey",
+    "en": "GocChaNMikey",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "cr-39",
+    "branch": "CR",
+    "jp": "Jasper",
+    "en": "Jasper",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "cr-43",
+    "branch": "CR",
+    "jp": "makiba",
+    "en": "makiba",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "cr-44",
+    "branch": "CR",
+    "jp": "obo",
+    "en": "obo",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "cr-45",
+    "branch": "CR",
+    "jp": "Tiramisu",
+    "en": "Tiramisu",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "cr-46",
+    "branch": "CR",
+    "jp": "kinako",
+    "en": "kinako",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "cr-47",
+    "branch": "CR",
+    "jp": "YY",
+    "en": "YY",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "cr-48",
+    "branch": "CR",
+    "jp": "Zeder",
+    "en": "Zeder",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "cr-49",
+    "branch": "CR",
+    "jp": "Wokka",
+    "en": "Wokka",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "cr-50",
+    "branch": "CR",
+    "jp": "VanilLa",
+    "en": "VanilLa",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "cr-51",
+    "branch": "CR",
+    "jp": "UyuRiru",
+    "en": "UyuRiru",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "cr-52",
+    "branch": "CR",
+    "jp": "uruca",
+    "en": "uruca",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "cr-53",
+    "branch": "CR",
+    "jp": "Toppy",
+    "en": "Toppy",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "cr-54",
+    "branch": "CR",
+    "jp": "Ruri",
+    "en": "Ruri",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "cr-55",
+    "branch": "CR",
+    "jp": "RizArt",
+    "en": "RizArt",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "cr-56",
+    "branch": "CR",
+    "jp": "rion",
+    "en": "rion",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "cr-58",
+    "branch": "CR",
+    "jp": "neth",
+    "en": "neth",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "cr-61",
+    "branch": "CR",
+    "jp": "Astell",
+    "en": "Astell",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "cr-62",
+    "branch": "CR",
+    "jp": "Mondo",
+    "en": "Mondo",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "cr-63",
+    "branch": "CR",
+    "jp": "Francisco",
+    "en": "Francisco",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "cr-64",
+    "branch": "CR",
+    "jp": "Daruma is god",
+    "en": "Daruma is god",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "cr-65",
+    "branch": "CR",
+    "jp": "Cpt",
+    "en": "Cpt",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "cr-66",
+    "branch": "CR",
+    "jp": "Cornn",
+    "en": "Cornn",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "cr-67",
+    "branch": "CR",
+    "jp": "Arisakaaa",
+    "en": "Arisakaaa",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "cr-68",
+    "branch": "CR",
+    "jp": "Amatsuki",
+    "en": "Amatsuki",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "cr-69",
+    "branch": "CR",
+    "jp": "Alice",
+    "en": "Alice",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "cr-70",
+    "branch": "CR",
+    "jp": "ade",
+    "en": "ade",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "cr-71",
+    "branch": "CR",
+    "jp": "Selly",
+    "en": "Selly",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "cr-72",
+    "branch": "CR",
+    "jp": "Ras",
+    "en": "Ras",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "cr-73",
+    "branch": "CR",
+    "jp": "Mainy",
+    "en": "Mainy",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "neo-1",
+    "branch": "NEO",
+    "jp": "渋谷 ハル",
+    "en": "Shibuya Hal",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "neo-2",
+    "branch": "NEO",
+    "jp": "白雪 レイド",
+    "en": "Shirayuki Reid",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "neo-3",
+    "branch": "NEO",
+    "jp": "或世 イヌ",
+    "en": "Aruse Inu",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "neo-4",
+    "branch": "NEO",
+    "jp": "緋月 ゆい",
+    "en": "Hizuki Yui",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "neo-5",
+    "branch": "NEO",
+    "jp": "夜絆 ニウ",
+    "en": "Yozuna Niu",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "neo-6",
+    "branch": "NEO",
+    "jp": "水無瀬",
+    "en": "Minase",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "neo-7",
+    "branch": "NEO",
+    "jp": "天帝 フォルテ",
+    "en": "Tentei Forte",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "neo-8",
+    "branch": "NEO",
+    "jp": "心白 てと",
+    "en": "Kohaku Teto",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "neo-9",
+    "branch": "NEO",
+    "jp": "久我 レオ",
+    "en": "Kuga Leo",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "neo-10",
+    "branch": "NEO",
+    "jp": "絲依 とい",
+    "en": "Itoi Toi",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "neo-11",
+    "branch": "NEO",
+    "jp": "瀬尾 カザリ",
+    "en": "Seo Kazari",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "neo-12",
+    "branch": "NEO",
+    "jp": "幽乃 うつろ",
+    "en": "Yuno Utsuro",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "neo-13",
+    "branch": "NEO",
+    "jp": "昏昏 アリア",
+    "en": "Konkon Aria",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "neo-14",
+    "branch": "NEO",
+    "jp": "青桐 エイト",
+    "en": "Aogiri Eito",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "neo-15",
+    "branch": "NEO",
+    "jp": "柊 ツルギ",
+    "en": "Hiiragi Tsurugi",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "neo-16",
+    "branch": "NEO",
+    "jp": "八神 ツクモ",
+    "en": "Yagami Tsukumo",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "neo-17",
+    "branch": "NEO",
+    "jp": "白那 しずく",
+    "en": "Shirana Shizuku",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "neo-18",
+    "branch": "NEO",
+    "jp": "麻倉 シノ",
+    "en": "Asakura Shino",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "neo-19",
+    "branch": "NEO",
+    "jp": "甘音 あむ",
+    "en": "Amane Amu",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "neo-20",
+    "branch": "NEO",
+    "jp": "日裏 クロ",
+    "en": "Hibura Kuro",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "neo-21",
+    "branch": "NEO",
+    "jp": "鬼ヶ谷 テン",
+    "en": "Onigaya Ten",
+    "cn": "",
+    "aliases": []
+  },
+  {
+    "id": "neo-22",
+    "branch": "NEO",
+    "jp": "光葉 エニ",
+    "en": "Mitsuba Eni",
+    "cn": "",
+    "aliases": []
+  }
+];
+const AVATAR_FILES = {"jp-166":true,"jp-1":true,"jp-2":true,"jp-3":true,"jp-4":true,"jp-5":true,"jp-6":true,"jp-7":true,"jp-8":true,"jp-9":true,"jp-10":true,"jp-11":true,"jp-12":true,"jp-13":true,"jp-14":true,"jp-15":true,"jp-16":true,"jp-17":true,"jp-18":true,"jp-19":true,"jp-20":true,"jp-21":true,"jp-22":true,"jp-23":true,"jp-24":true,"jp-25":true,"jp-26":true,"jp-27":true,"jp-28":true,"jp-29":true,"jp-30":true,"jp-31":true,"jp-32":true,"jp-33":true,"jp-34":true,"jp-35":true,"jp-36":true,"jp-37":true,"jp-38":true,"jp-39":true,"jp-40":true,"jp-41":true,"jp-42":true,"jp-43":true,"jp-44":true,"jp-45":true,"jp-46":true,"jp-47":true,"jp-48":true,"jp-49":true,"jp-50":true,"jp-51":true,"jp-52":true,"jp-53":true,"jp-54":true,"jp-55":true,"jp-56":true,"jp-57":true,"jp-58":true,"jp-59":true,"jp-60":true,"jp-61":true,"jp-62":true,"jp-63":true,"jp-64":true,"jp-65":true,"jp-66":true,"jp-67":true,"jp-68":true,"jp-69":true,"jp-70":true,"jp-71":true,"jp-72":true,"jp-73":true,"jp-74":true,"jp-75":true,"jp-76":true,"jp-77":true,"jp-78":true,"jp-79":true,"jp-80":true,"jp-81":true,"jp-82":true,"jp-83":true,"jp-84":true,"jp-85":true,"jp-86":true,"jp-87":true,"jp-88":true,"jp-89":true,"jp-90":true,"jp-91":true,"jp-92":true,"jp-93":true,"jp-94":true,"jp-95":true,"jp-96":true,"jp-97":true,"jp-98":true,"jp-99":true,"jp-100":true,"jp-101":true,"jp-102":true,"jp-103":true,"jp-104":true,"jp-105":true,"jp-106":true,"jp-107":true,"jp-108":true,"jp-109":true,"jp-110":true,"jp-111":true,"jp-112":true,"jp-113":true,"jp-114":true,"jp-115":true,"jp-116":true,"jp-117":true,"jp-118":true,"jp-119":true,"jp-120":true,"jp-121":true,"jp-122":true,"jp-123":true,"jp-124":true,"jp-125":true,"jp-126":true,"jp-127":true,"jp-128":true,"jp-129":true,"jp-130":true,"jp-131":true,"jp-132":true,"jp-133":true,"jp-134":true,"jp-135":true,"jp-136":true,"jp-137":true,"jp-138":true,"jp-139":true,"jp-140":true,"jp-141":true,"jp-142":true,"jp-143":true,"jp-144":true,"jp-145":true,"jp-146":true,"jp-147":true,"jp-148":true,"jp-149":true,"jp-150":true,"jp-151":true,"jp-152":true,"jp-153":true,"jp-154":true,"jp-155":true,"jp-156":true,"jp-157":true,"jp-158":true,"jp-159":true,"jp-160":true,"jp-161":true,"jp-162":true,"jp-163":true,"jp-164":true,"jp-165":true,"jp-167":true,"jp-168":true,"jp-169":true,"jp-170":true,"jp-171":true,"jp-172":true,"en-1":true,"en-2":true,"en-3":true,"en-4":true,"en-5":true,"en-6":true,"en-7":true,"en-8":true,"en-9":true,"en-10":true,"en-11":true,"en-12":true,"en-13":true,"en-14":true,"en-15":true,"en-16":true,"en-17":true,"en-18":true,"en-19":true,"en-20":true,"en-21":true,"en-22":true,"en-23":true,"en-24":true,"en-25":true,"en-26":true,"en-27":true,"en-28":true,"vspo-1":true,"vspo-2":true,"vspo-3":true,"vspo-4":true,"vspo-5":true,"vspo-6":true,"vspo-7":true,"vspo-8":true,"vspo-9":true,"vspo-10":true,"vspo-11":true,"vspo-12":true,"vspo-13":true,"vspo-14":true,"vspo-15":true,"vspo-16":true,"vspo-17":true,"vspo-18":true,"vspo-19":true,"vspo-20":true,"vspo-21":true,"vspo-22":true,"vspo-23":true,"vspo-24":true,"vspo-25":true,"vspo-26":true,"vspo-27":true,"vspo-28":true,"vspo-29":true,"vspo-30":true,"vspo-31":true,"vspo-32":true,"cr-1":true,"cr-12":true,"cr-23":true,"cr-24":true,"cr-37":true,"cr-39":true,"cr-43":true,"cr-44":true,"cr-45":true,"cr-46":true,"cr-47":true,"cr-48":true,"cr-49":true,"cr-50":true,"cr-51":true,"cr-52":true,"cr-53":true,"cr-54":true,"cr-55":true,"cr-56":true,"cr-58":true,"cr-61":true,"cr-62":true,"cr-63":true,"cr-64":true,"cr-65":true,"cr-66":true,"cr-67":true,"cr-68":true,"cr-69":true,"cr-70":true,"cr-71":true,"cr-72":true,"cr-73":true,"neo-1":true,"neo-2":true,"neo-3":true,"neo-4":true,"neo-5":true,"neo-6":true,"neo-7":true,"neo-8":true,"neo-9":true,"neo-10":true,"neo-11":true,"neo-12":true,"neo-13":true,"neo-14":true,"neo-15":true,"neo-16":true,"neo-17":true,"neo-18":true,"neo-19":true,"neo-20":true,"neo-21":true,"neo-22":true};
+// Additional group rosters from official sites, checked 2026-10-29. Crazy Raccoon includes STREAMER division only. Members with supplied portraits use local WebP images; others use text placeholders.
+const STORAGE_KEY = 'nijisanji-free-board-v3';
+const CREATOR_KEY = 'vtuber-quadrant-creator-v1';
+let state = loadState();
+let selectedId = null;
+let asc = true;
+let mobilePickedId = null;
+const $ = s => document.querySelector(s);
+const listEl = $('#list');
+const boardEl = $('#board');
+const creatorInput = $('#creatorName');
+creatorInput.value = localStorage.getItem(CREATOR_KEY) || '';
+creatorInput.addEventListener('input', () => {try{localStorage.setItem(CREATOR_KEY,creatorInput.value);}catch(e){} });
+const placedEl = $('#placed');
+const emptyEl = $('#empty');
+const drawerEl=$('#mobileDrawer');
+const backdropEl=$('#drawerBackdrop');
+const mobileInstruction=$('#mobileInstruction');
+const isMobile=()=>window.matchMedia('(max-width:980px)').matches;
+function openDrawer(){drawerEl.classList.add('is-open');backdropEl.classList.add('is-open');}
+function closeDrawer(){drawerEl.classList.remove('is-open');backdropEl.classList.remove('is-open');}
+function updateMobilePick(){mobileInstruction.hidden=!(isMobile() && mobilePickedId); if(mobilePickedId){const m=memberById(mobilePickedId);mobileInstruction.textContent='点击画布放置：'+(m?.jp||'主播');}}
+
+function normalizeOshiIds(obj, placements){
+  const candidates = Array.isArray(obj?.oshiIds) ? obj.oshiIds : (obj?.oshiId ? [obj.oshiId] : []);
+  return [...new Set(candidates.filter(id => placements?.[id]))].slice(0,2);
+}
+function loadState(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(!raw) return {placements:{},oshiIds:[]};
+    const obj = JSON.parse(raw);
+    const placements = obj.placements || {};
+    return {placements, oshiIds: normalizeOshiIds(obj, placements)};
+  }catch(e){return {placements:{},oshiIds:[]};}
+}
+function saveState(){localStorage.setItem(STORAGE_KEY, JSON.stringify(state));}
+function normalize(s){return (s||'').toString().toLowerCase().normalize('NFKC').replace(/[\s\-_.·・]/g,'');}
+function escapeHtml(str){return (str??'').toString().replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
+function searchBlob(m){return normalize([m.jp,m.en,m.cn,...(m.aliases||[])].join(' '));}
+const REPRESENTATIVE_COLORS = {"愛園愛美":"#F98FB7","赤城ウェン":"#FF8C9B","赤羽葉子":"#CA636C","明楽レイ":"#A9CEEC","飛鳥ひな":"#FAD8DC","天ヶ瀬むゆ":"#FA5578","天宮こころ":"#C5EDFF","雨森小夜":"#756F7D","アルス・アルマル":"#7FD6E2","アンジュ・カトリーナ":"#C83C35","イ ロハ":"#FDFF7A","家長むぎ":"#FF899D","五十嵐梨花":"#FF8C3C","石神のぞみ":"#E6325F","五木左京":"#F3A4A9","伊波ライ":"#DCFF50","戌亥とこ":"#92F3A4","イブラヒム":"#7CA1F0","宇佐美リト":"#FAC31E","宇志海いちご":"#FFCACE","卯月コウ":"#F9E97A","海妹四葉":"#FFE632","エクス・アルビオ":"#5C9BBC","エトナ クリムソン":"#DC143C","えま★おうがすと":"#B32F51","エリー・コニファー":"#DAFFF9","える":"#E2364F","オ ジユ":"#F1F4F4","男虎":"#442657","オリバー・エバンス":"#BCC37E","魁星":"#0C6F72","甲斐田晴":"#4DD7E3","加賀美ハヤト":"#B9ADB9","語部紡":"#07A4E3","蝸堂みかる":"#FFE673","叶":"#ABD3D8","鏑木ろこ":"#198CAA","神永タイガ":"#E4D571","神田笑一":"#F4D35B","ガオン":"#F9E072","綺沙良":"#846FC7","北小路ヒスイ":"#38B48B","北見遊征":"#FF6E1E","雲母たまこ":"#FFD264","ギルザレンⅢ世":"#002FA7","葛葉":"#ACA7BB","倉持めると":"#EB4682","九里詠太":"#CC8F7A","来栖夏芽":"#8AD1EF","黒井しば":"#585C82","剣持刀也":"#A590AF","弦月藤士郎":"#B43246","小々波いるか":"#4270B2","小清水透":"#CDA5FF","梢桃音":"#FFC6E2","小柳ロウ":"#5A5FAA","佐伯イッテツ":"#8C4664","三枝明那":"#F03C32","早乙女ベリー":"#DF6D7C","榊ネス":"#C2AAE6","酒寄颯馬":"#BA6EA5","桜凛月":"#C57FC7","笹木咲":"#EF9AAF","椎名唯華":"#F1C8DE","シェリン・バーガンディ":"#6C2735","栞葉るり":"#2887FF","司賀りこ":"#FFE36C","四季凪アキラ":"#235AAA","獅子堂あかり":"#FFD728","シスター・クレア":"#DFC6A8","静凛":"#745399","篠宮ゆの":"#AAD9F4","渋谷ハジメ":"#D7FAD7","白砂あやね":"#54A2E5","白雪巴":"#6E3FE7","城瀬いすみ":"#E5E2F6","ジョー・力一":"#D598DD","周央サンゴ":"#EF8468","健屋花那":"#FF2FA2","鈴木勝":"#7B788A","鈴原るる":"#FFADBB","皇れお":"#EEB1CC","セフィナ":"#C92235","セラフ・ダズルガーデン":"#DC3C41","千凛あゆむ":"#543298","ソ ナギ":"#7C86DE","ソフィア・ヴァレンタイン":"#C8C3DC","空星きらめ":"#44DDF4","鷹宮リオン":"#CC3D7B","立伝都々":"#C31E5A","珠乃井ナナ":"#63AED9","塚原大地":"#4A4A5C","月ノ美兎":"#E43F3B","でびでび・でびる":"#444C7D","デレム カド":"#F6D4DF","東堂コハク":"#EA930A","十河ののは":"#7DC7B0","轟京子":"#E66186","ドーラ":"#A83E4A","ナ セラ":"#FEECF3","長尾景":"#625DA1","ナギサ アルシニア":"#CC338B","渚トラウト":"#77B6C2","七瀬すず菜":"#9DD9B9","西園チグサ":"#3A8FB7","ニュイ・ソシエール":"#D24E5F","猫屋敷美紅":"#FF8C73","ハ ユン":"#B14D4D","葉加瀬冬雪":"#EEFFFF","ハナ マキア":"#FFEFD5","花籠つばさ":"#818FBF","花畑チャイカ":"#40CF84","早瀬走":"#AA7BE8","葉山舞鈴":"#72D5CE","春崎エアル":"#4B5F9E","樋口楓":"#FBAF71","一橋綾人":"#9FCEC9","緋八マナ":"#64C8F0","壱百満天原サロメ":"#CD3796","風楽奏斗":"#F0F0F5","伏見ガク":"#FFCB5B","フミ":"#F4E49D","文野環":"#EBDDB4","フレン・E・ルスタリオ":"#EC1D2F","不破湊":"#BF69F4","ぷりん・らら・もーど":"#FFCEF1","ベルモンド・バンデラス":"#683D46","星川サラ":"#FAB80D","星導ショウ":"#A58CDC","本間ひまわり":"#FBE340","ぽめろ・ぱんち":"#FFEEA0","先斗寧":"#5A7DFF","舞元啓介":"#094078","魔界ノりりむ":"#EF6F94","ましろ爻":"#1E2232","町田ちま":"#80C8EF","魔使マオ":"#C93965","御子神琴音":"#D0669A","水面まどか":"#FF8184","ミラン・ケストレル":"#2C35BD","ミン スゥーハ":"#5AC8FF","叢雲カゲツ":"#6EB487","モイラ":"#91ABD0","物述有栖":"#81D4E2","森中花咲":"#C8F39A","夜牛詩乃":"#BD81D4","矢車りね":"#FEECD8","社築":"#B6C6F2","山神カルタ":"#384B5A","山田龍一郎":"#82ACC8","ヤン ナリ":"#FAD1D6","夕陽リリ":"#BFFFFF","雪城眞尋":"#B4E9FF","夢月ロア":"#D8368D","夢追翔":"#AC324B","夜見れな":"#F7265A","ライ ガリレイ":"#7DF9FF","ライラ アルストロエメリア":"#F78181","ラトナ・プティ":"#F36C21","リゼ・ヘルエスタ":"#42FFFF","リュ ハリ":"#96CEEB","緑仙":"#5DCCAB","竜胆尊":"#745BFF","ルイス・キャミー":"#E86A74","ルンルン":"#D8E9FC","Rei7":"#4BB3CE","レイン・パターソン":"#F74848","レオス・ヴィンセント":"#234A87","レヨン":"#558E8D","レヴィ・エリファ":"#FF5A00","ローレン・イロアス":"#C10E49","渡会雲雀":"#192332","Aia Amare":"#FFFEF7","Alban Knox":"#FF5F00","Uki Violeta":"#B600FF","Enna Alouette":"#858ED1","Elira Pendora":"#95C8D8","Vezalius Bandage":"#C34196","Ver Vermillion":"#D5345E","Vox Akuma":"#960018","Meloco Kyoran":"#A09BD8","Klara Charmwood":"#DFCDBF","Claude Clawmark":"#7D3CAF","Kaelix Debonair":"#CDCD00","Sonny Brisko":"#FFF321","Zeal Ginjoka":"#007328","Scarle Yonaguni":"#E60012","Seible":"#0A44AA","Doppio Dropscythe":"#A50082","Finana Ryugu":"#35D9AD","Freodore":"#AA0037","Vantacrow Bringer":"#8728E1","Petra Gurin":"#FFAE42","Maria Marionette":"#E55A9B","Millie Parfait":"#FEBC87","Shu Yamino":"#A660A7","Yu Q. Wilson":"#F5EB28","Ryoma Barrenwort":"#952D22","Luca Kaneshiro":"#D4AF37","Ren Zotto":"#429B76","Hana Macchia":"#FFEFD5","Zea Cornelia":"#FBEC5D","Rai Galilei":"#7DF9FF","Miyu Ottavia":"#FFAB75","Riksa Dhirendra":"#FF0103","Azura Cecillia":"#1B486F","Nara Haramaung":"#26C2CD","Layla Alstroemeria":"#F78181","Bonnivier Pranaja":"#00FFCD","Siska Leontyne":"#FFDFA0","Nagisa Arcinia":"#CC338B","Derem Kado":"#F6D4DF","Reza Avanluna":"#765CB8","Hyona Elatiora":"#800020","Xia Ekavira":"#F2F680","Mika Melatika":"#DDBFF8","Wiffy":"#A7FFF4","Yu Luri":"#FDEFEC","Shin Yuya":"#7ACFAD","Min Suha":"#5AC8FF","Gaon":"#F9E072","Sonagi":"#7C86DE","花芽すみれ":"#B0C4DE","花芽なずな":"#FABEDC","小雀とと":"#F5EB4A","一ノ瀬うるは":"#4182FA","胡桃のあ":"#FFDBFE","兎咲ミミ":"#C7B2D6","空澄セナ":"#FFFFFF","橘ひなの":"#FA96C8","英リサ":"#D1DE79","如月れん":"#BE2152","神成きゅぴ":"#FFD23C","八雲べに":"#85CAB3","藍沢エマ":"#B4F1F9","紫宮るな":"#D6ADFF","猫汰つな":"#FF3652","白波らむね":"#8ECED9","小森めと":"#FBA03F","夢野あかり":"#FF998D","夜乃くろむ":"#909EC8","紡木こかげ":"#5195E1","千燈ゆうひ":"#ED784A","蝶屋はなび":"#EA5506","甘結もか":"#ECA0AA","銀城サイネ":"#58535E","龍巻ちせ":"#BEFF77"};
+function representativeColor(m){ return REPRESENTATIVE_COLORS[m.jp] || REPRESENTATIVE_COLORS[m.en] || null; }
+function tintRepresentativeColor(hex, whiteRatio=0.72){
+  const h=String(hex||'').replace('#',''); if(!/^[0-9a-fA-F]{6}$/.test(h)) return '#f1eff2';
+  const rgb=[0,2,4].map(i=>parseInt(h.slice(i,i+2),16));
+  return '#'+rgb.map(v=>Math.round(v*(1-whiteRatio)+255*whiteRatio).toString(16).padStart(2,'0')).join('');
+}
+function avatarBackground(m,hasImage=true){
+  const rep=representativeColor(m);
+  if(rep) return tintRepresentativeColor(rep);
+  // No verified personal color: transparent artwork gets a neutral base instead of an invented color.
+  return hasImage ? '#f1eff2' : colorFromText(m.id+m.jp);
+}
+function colorFromText(t){let h=0; for(const ch of t) h=(h*31 + ch.codePointAt(0))%360; return `hsl(${h}, 62%, 56%)`;}
+function avatarLabel(m){if(m.en){const p=m.en.replace(/[^A-Za-z\s]/g,'').trim().split(/\s+/).filter(Boolean); if(p.length>=2) return (p[0][0]+p[1][0]).toUpperCase(); if(p.length===1) return p[0].slice(0,2).toUpperCase();} return (m.jp||m.cn||'?').replace(/[\s・·]/g,'').slice(0,2);}
+function avatarHtml(m){
+  const localPath = AVATAR_FILES[m.id] ? 'avatars/' + m.id + '.webp' : '';
+  const src = avatarStore[m.id] || localPath;
+  const label = escapeHtml(avatarLabel(m));
+  return src ? `<img src="${escapeHtml(src)}" alt="${escapeHtml(m.jp)}" loading="lazy" onerror="this.remove();this.parentElement.style.background='${colorFromText(m.id+m.jp)}';this.parentElement.textContent='${label}'" style="width:100%;height:100%;object-fit:cover;border-radius:50%">` : label;
+}
+function loadAvatars(){try{return JSON.parse(localStorage.getItem('nijisanji-avatar-images-v1') || '{}')}catch(e){return {}}}
+const avatarStore = loadAvatars();
+function memberById(id){return MEMBERS.find(m=>m.id===id);}
+function quadrantDisplayName(m){return m.branch==='EN'?(m.en||m.jp||m.cn||''):(m.jp||m.en||m.cn||'');}
+function clamp(v,min,max){return Math.max(min, Math.min(max,v));}
+function setEmpty(){emptyEl.style.display = Object.keys(state.placements).length ? 'none' : 'grid';}
+
+function renderList(){
+  const q = normalize($('#search').value);
+  const branch = $('#branch').value;
+  const status = $('#status').value;
+  let arr=[...MEMBERS].sort((a,b)=>{
+    const ka=normalize(a.jp||a.en||a.cn); const kb=normalize(b.jp||b.en||b.cn);
+    return asc ? ka.localeCompare(kb,'ja') : kb.localeCompare(ka,'ja');
+  });
+  listEl.innerHTML='';
+  for(const m of arr){
+    const placed = !!state.placements[m.id];
+    if(q && !searchBlob(m).includes(q)) continue;
+    if(branch!=='all' && (branch==='NIJISANJI' ? !['JP','EN'].includes(m.branch) : m.branch!==branch)) continue;
+    if(status==='placed' && !placed) continue;
+    if(status==='unplaced' && placed) continue;
+    const el=document.createElement('div');
+    el.className='member';
+    el.draggable=true;
+    el.dataset.id=m.id;
+    if(mobilePickedId===m.id)el.classList.add('is-picked');
+    el.addEventListener('click',()=>{if(!isMobile())return;mobilePickedId=m.id;closeDrawer();updateMobilePick();});
+    el.innerHTML=`<div class="avatar" style="background:${avatarBackground(m,!!(avatarStore[m.id] || AVATAR_FILES[m.id]))}">${avatarHtml(m)}</div>
+      <div class="meta"><strong>${escapeHtml(m.jp)}</strong><span>${escapeHtml(m.en||m.cn||'—')}</span></div>
+      <small>${placed?'已放置':(m.branch==='JP'||m.branch==='EN'?'NIJI '+m.branch:m.branch==='VSPO'?'VSPO!':m.branch==='NEO'?'Neo-Porte':'CR')}</small>`;
+    el.addEventListener('contextmenu', e=>{e.preventDefault();uploadAvatar(m.id);});
+    el.addEventListener('dragstart', e=>{el.classList.add('dragging'); e.dataTransfer.setData('text/plain', m.id);});
+    el.addEventListener('dragend', ()=>el.classList.remove('dragging'));
+    listEl.appendChild(el);
+  }
+}
+
+function uploadAvatar(id){
+  const fileInput=document.createElement('input');fileInput.type='file';fileInput.accept='image/*';
+  fileInput.addEventListener('change',()=>{
+    const file=fileInput.files?.[0];if(!file)return;
+    if(file.size>3*1024*1024){alert('请上传小于 3 MB 的头像。');return;}
+    const reader=new FileReader();reader.onload=()=>{
+      avatarStore[id]=String(reader.result);
+      try{localStorage.setItem('nijisanji-avatar-images-v1',JSON.stringify(avatarStore));renderPlaced();}
+      catch(e){delete avatarStore[id];alert('浏览器本地存储空间不足，请尝试更小的头像图片。');}
+    };reader.readAsDataURL(file);
+  });fileInput.click();
+}
+function updateSelectionBar(){
+  const bar=document.getElementById('selectionBar');
+  if(!selectedId || !state.placements[selectedId]){bar.hidden=true;return;}
+  const m=memberById(selectedId);
+  if(!m){bar.hidden=true;return;}
+  bar.hidden=false;
+  document.getElementById('selectionName').textContent=m.jp;
+  const button=document.getElementById('selectionOshi');
+  const active=state.oshiIds.includes(selectedId);
+  button.textContent=active?'取消神推':'设为神推';
+  button.classList.toggle('is-active',active);
+  button.setAttribute('aria-pressed',String(active));
+}
+document.getElementById('selectionOshi').addEventListener('click',()=>{
+  if(!selectedId || !state.placements[selectedId])return;
+  const current = state.oshiIds || [];
+  if(current.includes(selectedId)){
+    state.oshiIds = current.filter(id=>id!==selectedId);
+  }else{
+    if(current.length>=2){alert('神推最多设置两位哦！如需更换，请先取消其中一位。');return;}
+    state.oshiIds = [...current, selectedId];
+  }
+  saveState();renderPlaced();
+});
+document.getElementById('selectionEdit').addEventListener('click',()=>{
+  if(!selectedId)return;
+  const card=Array.from(placedEl.querySelectorAll('.card')).find(c=>c.dataset.id===selectedId);
+  card?.openNoteEditor?.();
+});
+document.getElementById('selectionClose').addEventListener('click',()=>{
+  selectedId=null;placedEl.querySelectorAll('.card.selected').forEach(c=>c.classList.remove('selected'));updateSelectionBar();
+});
+function renderPlaced(){
+  placedEl.innerHTML='';
+  let layerIndex=10;
+  for(const [id,pl] of Object.entries(state.placements)){
+    const m=memberById(id); if(!m) continue;
+    const card=document.createElement('div');
+    card.className='card'+(selectedId===id?' selected':'')+(state.oshiIds.includes(id)?' is-oshi':'');
+    card.dataset.id=id;
+    card.style.left=pl.x+'%'; card.style.top=pl.y+'%';
+    card.style.zIndex=String(layerIndex++);
+    card.innerHTML=`<div class="tools"><button class="iconbtn remove" title="移除">×</button></div>
+      <div class="oshi-avatar-wrap"><div class="avatar" style="background:${avatarBackground(m,!!(avatarStore[m.id] || AVATAR_FILES[m.id]))}">${avatarHtml(m)}</div>${state.oshiIds.includes(id)?`<svg class="oshi-arc" viewBox="0 0 100 100" aria-label="神推"><defs><path id="oshiPath-${escapeHtml(id)}" d="M 49 9 A 41 41 0 0 1 92 50" /></defs><text><textPath href="#oshiPath-${escapeHtml(id)}" startOffset="50%" text-anchor="middle">神推</textPath></text></svg>`:''}</div>
+      <div class="name">${escapeHtml(quadrantDisplayName(m))}</div>
+      <div class="note-slot"></div>`;
+    card.querySelector('.remove').addEventListener('click',e=>{e.stopPropagation();removePlacement(id);});
+    const slot=card.querySelector('.note-slot');
+    function showNote(){
+      slot.innerHTML='';
+      if(card.editAbort)card.editAbort.abort();
+      const label=document.createElement('div');
+      label.className='note';
+      label.textContent=state.placements[id]?.note||'';
+      label.title='点击编辑推荐理由';
+      label.addEventListener('pointerdown',e=>e.stopPropagation());
+      label.addEventListener('click',e=>{e.stopPropagation();showEdit();});
+      slot.appendChild(label);
+    }
+    function showEdit(){
+      slot.innerHTML='';
+      const row=document.createElement('div');row.className='edit-row';
+      if(card.editAbort)card.editAbort.abort();
+      const editAbort=new AbortController();card.editAbort=editAbort;
+      const input=document.createElement('input');input.className='note-input';input.type='text';
+      input.maxLength=300;input.value=state.placements[id]?.note||'';input.placeholder='输入推荐理由…';
+      const ok=document.createElement('button');ok.className='confirm-note';ok.textContent='√';ok.title='保存';
+      let finished=false;
+      function save(){if(finished)return;finished=true;editAbort.abort();if(!state.placements[id])return;state.placements[id].note=input.value.trim();saveState();showNote();}
+      function onOutside(e){if(!row.contains(e.target))save();}
+      document.addEventListener('pointerdown',onOutside,{capture:true,signal:editAbort.signal});
+      input.addEventListener('blur',()=>setTimeout(()=>{if(!row.contains(document.activeElement))save();},0));
+      input.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();save();}if(e.key==='Escape'){e.preventDefault();editAbort.abort();showNote();}});
+      ok.addEventListener('click',e=>{e.stopPropagation();save();});
+      for(const el of [row,input,ok])el.addEventListener('pointerdown',e=>e.stopPropagation());
+      row.append(input,ok);slot.append(row);input.focus();input.select();
+    }
+    card.openNoteEditor=showEdit;
+    showNote();
+    card.addEventListener('contextmenu',e=>{
+      if(e.target.closest('.edit-row,.note-slot'))return;
+      e.preventDefault();selectedId=id;
+      placedEl.querySelectorAll('.card.selected').forEach(c=>c.classList.remove('selected'));
+      card.classList.add('selected');updateSelectionBar();
+    });
+    enableFreeDrag(card,id);
+    placedEl.appendChild(card);
+  }
+  renderList();setEmpty();updateSelectionBar();
+}
+
+function boardPercent(clientX, clientY){
+  const r = boardEl.getBoundingClientRect();
+  return { x: ((clientX - r.left)/r.width)*100, y: ((clientY - r.top)/r.height)*100 };
+}
+function place(id, x, y){
+  const prev = state.placements[id] || {note:''};
+  // Reinsert the placement at the end: later entries render above earlier cards.
+  if(Object.prototype.hasOwnProperty.call(state.placements,id)) delete state.placements[id];
+  state.placements[id] = { x: clamp(x, 5, 95), y: clamp(y, 7, 93), note: prev.note || '' };
+  selectedId=id; saveState(); renderPlaced();
+}
+function removePlacement(id){ state.oshiIds=(state.oshiIds||[]).filter(oshiId=>oshiId!==id); delete state.placements[id]; if(selectedId===id) selectedId=null; saveState(); renderPlaced(); }
+
+function snapCardToCenter(card,targetX,targetY){
+  card.style.left = targetX + '%';
+  card.style.top = targetY + '%';
+  const boardRect = boardEl.getBoundingClientRect();
+  const avatar = card.querySelector('.avatar');
+  if(!avatar || !boardRect.width || !boardRect.height){
+    return {x:targetX,y:targetY,snappedX:false,snappedY:false};
+  }
+  const aRect = avatar.getBoundingClientRect();
+  const avatarCenterX = ((aRect.left + aRect.width/2) - boardRect.left) / boardRect.width * 100;
+  const avatarCenterY = ((aRect.top + aRect.height/2) - boardRect.top) / boardRect.height * 100;
+  const thresholdX = Math.max(1.1, Math.min(3.2, 18 * 100 / boardRect.width));
+  const thresholdY = Math.max(1.1, Math.min(3.2, 18 * 100 / boardRect.height));
+  let snappedX = false, snappedY = false;
+  if(Math.abs(avatarCenterX - 50) <= thresholdX){
+    targetX += (50 - avatarCenterX);
+    snappedX = true;
+  }
+  if(Math.abs(avatarCenterY - 50) <= thresholdY){
+    targetY += (50 - avatarCenterY);
+    snappedY = true;
+  }
+  targetX = clamp(targetX, 5, 95);
+  targetY = clamp(targetY, 7, 93);
+  card.style.left = targetX + '%';
+  card.style.top = targetY + '%';
+  return {x:targetX,y:targetY,snappedX,snappedY};
+}
+function enableFreeDrag(card,id){
+  let dragging = false;
+  let moved = false;
+  let startClientX = 0, startClientY = 0;
+  let startX = 0, startY = 0;
+  let currentX = 0, currentY = 0;
+  let activePointerId = null;
+
+  card.addEventListener('pointerdown', e => {
+    if (e.button !== 0 || e.target.closest('.iconbtn,.edit-row,.note-slot')) return;
+    const pl = state.placements[id];
+    if (!pl) return;
+    dragging = true;
+    moved = false;
+    activePointerId = e.pointerId;
+    startClientX = e.clientX;
+    startClientY = e.clientY;
+    startX = currentX = pl.x;
+    startY = currentY = pl.y;
+    selectedId = id;
+    // Do not re-render here: removing the DOM node would cancel pointer capture.
+    document.querySelectorAll('.card.selected').forEach(el => el.classList.remove('selected'));
+    card.classList.add('selected');
+    updateSelectionBar();
+    card.setPointerCapture(activePointerId);
+    e.preventDefault();
+  });
+
+  card.addEventListener('pointermove', e => {
+    if (!dragging || e.pointerId !== activePointerId) return;
+    const rect = boardEl.getBoundingClientRect();
+    if (!rect.width || !rect.height) return;
+    const dx = (e.clientX - startClientX) * 100 / rect.width;
+    const dy = (e.clientY - startClientY) * 100 / rect.height;
+    if (!moved && (Math.abs(e.clientX-startClientX) > 2 || Math.abs(e.clientY-startClientY) > 2)) {
+      moved = true;
+      const topZ = Math.max(10, ...Array.from(placedEl.querySelectorAll('.card')).map(el => Number(el.style.zIndex)||0));
+      card.style.zIndex = String(topZ + 1);
+    }
+    currentX = clamp(startX + dx, 5, 95);
+    currentY = clamp(startY + dy, 7, 93);
+    const snapped = snapCardToCenter(card,currentX,currentY);
+    currentX = snapped.x;
+    currentY = snapped.y;
+  });
+
+  function finish(e) {
+    if (!dragging || e.pointerId !== activePointerId) return;
+    dragging = false;
+    activePointerId = null;
+    if (state.placements[id]) {
+      state.placements[id].x = currentX;
+      state.placements[id].y = currentY;
+      if(moved){
+        const latestPlacement=state.placements[id];
+        delete state.placements[id];
+        state.placements[id]=latestPlacement;
+      }
+      saveState();
+    }
+    // A short click opens the inline editor; a real drag also moves the card to the top layer.
+    if(!moved){card.openNoteEditor();}
+    else {renderPlaced();}
+  }
+  card.addEventListener('pointerup', finish);
+  card.addEventListener('pointercancel', finish);
+}
+
+$('#mobileOpen').addEventListener('click',openDrawer);
+backdropEl.addEventListener('click',closeDrawer);
+window.addEventListener('keydown',e=>{if(e.key==='Escape')closeDrawer();});
+boardEl.addEventListener('pointerup',e=>{if(!isMobile()||!mobilePickedId)return; if(e.target.closest('.card'))return; const p=boardPercent(e.clientX,e.clientY); const id=mobilePickedId;mobilePickedId=null;updateMobilePick();place(id,p.x,p.y);});
+boardEl.addEventListener('dragover', e=>e.preventDefault());
+boardEl.addEventListener('drop', e=>{ e.preventDefault(); const id=e.dataTransfer.getData('text/plain'); if(!id) return; const p=boardPercent(e.clientX,e.clientY); place(id,p.x,p.y); });
+$('#search').addEventListener('input', renderList);
+$('#branch').addEventListener('change', renderList);
+$('#status').addEventListener('change', renderList);
+$('#toggleSort').addEventListener('click', ()=>{asc=!asc; renderList();});
+$('#help').addEventListener('click', ()=>{alert(`使用说明：
+1. 左侧列表可以单独滚动。
+2. 把主播卡拖进右侧四象限。
+3. 放进去之后，可以继续在四象限上任意自由拖动。
+4. 点击头像编辑理由；选中头像后可在上方操作栏设为／取消神推（最多两位）。\n5. 在左侧成员上右键，可上传自选头像。
+6. 布局自动保存在当前浏览器。`);});
+$('#clear').addEventListener('click', ()=>{ if(!confirm('确定清空所有已放置的卡片吗？')) return; state.placements={};state.oshiIds=[]; selectedId=null; saveState(); renderPlaced(); });
+// High-resolution, self-contained SNS image: draws just the quadrant, not the sidebar or buttons.
+function roundRectPath(ctx,x,y,w,h,r){const k=Math.min(r,w/2,h/2);ctx.beginPath();ctx.moveTo(x+k,y);ctx.arcTo(x+w,y,x+w,y+h,k);ctx.arcTo(x+w,y+h,x,y+h,k);ctx.arcTo(x,y+h,x,y,k);ctx.arcTo(x,y,x+w,y,k);ctx.closePath();}
+function exportText(ctx,str,x,y,maxWidth){ctx.fillText(str,x,y,maxWidth);}
+async function getPortrait(m){
+  const path=avatarStore[m.id] || (AVATAR_FILES[m.id]?'avatars/'+m.id+'.webp':null);
+  if(!path)return null;
+  return new Promise(resolve=>{const im=new Image();im.onload=()=>resolve(im);im.onerror=()=>resolve(null);im.src=path;});
+}
+function wrapExportText(ctx,content,maxWidth,maxLines){
+  const chars=Array.from(String(content||''));const rows=[];let row='';
+  for(const ch of chars){if(ctx.measureText(row+ch).width>maxWidth && row){rows.push(row);row=ch;}else row+=ch;}
+  if(row)rows.push(row);
+  if(rows.length>maxLines){const clipped=rows.slice(0,maxLines);let last=clipped[maxLines-1];while(last && ctx.measureText(last+'…').width>maxWidth)last=last.slice(0,-1);clipped[maxLines-1]=last+'…';return clipped;}
+  return rows;
+}
+function paintOshiOnCanvas(c, x, y, r){
+  c.save();
+  c.beginPath();c.arc(x,y,r+2,0,Math.PI*2);c.strokeStyle='#e2aa31';c.lineWidth=4;c.stroke();
+  // Text follows a circular arc at the upper right, like the DOM SVG textPath.
+  const label='神推',fontSize=Math.max(17,Math.round(r*.53));
+  c.font='800 '+fontSize+'px "Noto Sans SC","PingFang SC","Microsoft YaHei",sans-serif';
+  c.textAlign='center';c.textBaseline='middle';c.lineJoin='round';
+  const pathRadius=r+15,angles=[-Math.PI*.39,-Math.PI*.20];
+  [...label].forEach((ch,i)=>{
+    const angle=angles[i];
+    c.save();c.translate(x+Math.cos(angle)*pathRadius,y+Math.sin(angle)*pathRadius);
+    c.rotate(angle+Math.PI/2);c.strokeStyle='#fff9e8';c.lineWidth=4;
+    c.strokeText(ch,0,0);c.fillStyle='#bd8514';c.fillText(ch,0,0);c.restore();
+  });
+  c.restore();
+}
+// Return the actual avatar-circle center on the live board, in board-relative percentages.
+function renderedAvatarPercent(id, fallback){
+  const card = Array.from(placedEl.querySelectorAll('.card')).find(el => el.dataset.id === id);
+  const avatar = card?.querySelector('.avatar');
+  const rect = boardEl.getBoundingClientRect();
+  if(avatar && rect.width > 0 && rect.height > 0){
+    const a = avatar.getBoundingClientRect();
+    return {
+      x: ((a.left + a.width / 2 - rect.left) / rect.width) * 100,
+      y: ((a.top + a.height / 2 - rect.top) / rect.height) * 100
+    };
+  }
+  return fallback || {x: 50, y: 50};
+}
+
+async function exportQuadrantImage(){
+  const btn=$('#export');const oldLabel=btn.textContent;btn.disabled=true;btn.textContent='生成图片中…';
+  try{
+    // Render two native SNS aspect ratios (portrait 9:16 and landscape 4:3); positions remain percentages of the quadrant.
+    const vertical=$('#exportRatio').value==='portrait';
+    const W=vertical?1080:1440,H=vertical?1920:1080;
+    const pad=vertical?55:60,by=vertical?220:165,bh=vertical?1615:840;
+    const canvas=document.createElement('canvas');canvas.width=W;canvas.height=H;
+    const c=canvas.getContext('2d');
+    c.fillStyle='#fff';c.fillRect(0,0,W,H);
+    c.fillStyle='#30343c';c.font=(vertical?'600 38px':'600 43px')+' "Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif';
+    c.textAlign='left';c.fillText('VTuber Viewing Preferences',pad,vertical?88:78);
+    const who=creatorInput.value.trim();
+    c.fillStyle='#737780';c.font='27px "Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif';
+    c.fillText('观看偏好 · 四象限',pad,vertical?139:124);
+    if(who){c.textAlign='right';c.font='26px "Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif';c.fillText('填表人：'+who,W-pad,vertical?187:120,vertical?W-pad*2:665);c.textAlign='left';}
+    // White canvas, restrained axes, gentle frame.
+    roundRectPath(c,pad,by,W-pad*2,bh,23);c.fillStyle='#fff';c.fill();c.strokeStyle='#e0e2e6';c.lineWidth=2;c.stroke();
+    const bx=pad,bw=W-pad*2,cx=bx+bw/2,cy=by+bh/2;
+    c.strokeStyle='#b9babd';c.fillStyle='#b9babd';c.lineWidth=2.5;
+    const arrow=(x,y,angle)=>{c.save();c.translate(x,y);c.rotate(angle);c.beginPath();c.moveTo(0,0);c.lineTo(-14,-7);c.lineTo(-14,7);c.closePath();c.fill();c.restore();};
+    c.beginPath();c.moveTo(cx,by+85);c.lineTo(cx,by+bh-85);c.moveTo(bx+90,cy);c.lineTo(bx+bw-90,cy);c.stroke();
+    arrow(cx,by+85,-Math.PI/2);arrow(cx,by+bh-85,Math.PI/2);arrow(bx+90,cy,Math.PI);arrow(bx+bw-90,cy,0);
+    c.fillStyle='#41444b';c.font='500 33px "Noto Sans SC","PingFang SC","Microsoft YaHei","Noto Sans CJK SC",sans-serif';c.textAlign='center';
+    c.fillText('好看爱看',cx,by+52);c.fillText('有空看看',cx,by+bh-29);
+    c.save();c.translate(bx+47,cy);c.rotate(Math.PI/2);c.fillText('占有欲大爆发',0,0);c.restore();
+    c.save();c.translate(bx+bw-47,cy);c.rotate(Math.PI/2);c.fillText('都给我看',0,0);c.restore();
+    const placed=Object.entries(state.placements).filter(([id])=>memberById(id));
+    const portraitList=await Promise.all(placed.map(([,pl],i)=>getPortrait(memberById(placed[i][0]))));
+    // Export based on the avatar circle center actually seen on screen, so portrait-center alignment stays identical across 4:3 and 9:16.
+    const rect=boardEl.getBoundingClientRect();
+    const baseWidth=Math.max(1,rect.width),baseHeight=Math.max(1,rect.height);
+    const sx=Math.min(1.30,bw/baseWidth),sy=Math.min(1.25,bh/baseHeight);
+    const factor=Math.min(sx,sy);
+    const avatarRadius=Math.max(29,Math.min(vertical?42:44,32*factor));
+    const namePx=Math.max(15,Math.min(21,13*factor));
+    const notePx=Math.max(14,Math.min(19,12*factor));
+    for(let i=0;i<placed.length;i++){
+      const [id,pl]=placed[i],m=memberById(id),portrait=portraitList[i];
+      const livePos=renderedAvatarPercent(id, pl);
+      const x=bx+bw*(Number(livePos.x)||0)/100;
+      const y=by+bh*(Number(livePos.y)||0)/100;
+      c.save();c.beginPath();c.rect(bx+2,by+2,bw-4,bh-4);c.clip();
+      c.beginPath();c.arc(x,y,avatarRadius,0,Math.PI*2);c.closePath();
+      c.fillStyle=avatarBackground(m,!!portrait);c.fill();
+      if(portrait){c.save();c.clip();c.drawImage(portrait,x-avatarRadius,y-avatarRadius,avatarRadius*2,avatarRadius*2);c.restore();}
+      else{c.fillStyle=representativeColor(m) ? representativeColor(m) : colorFromText(m.id+m.jp);c.fill();c.fillStyle='#fff';c.textAlign='center';c.font='bold 20px system-ui,sans-serif';c.fillText(avatarLabel(m),x,y+5);} 
+      if(state.oshiIds.includes(id))paintOshiOnCanvas(c,x,y,avatarRadius);
+      c.textAlign='center';c.fillStyle='#282c34';c.font='600 '+namePx+'px "Noto Sans SC","Noto Sans JP",system-ui,sans-serif';
+      exportText(c,quadrantDisplayName(m),x,y+avatarRadius+26,175);
+      const note=(pl.note||'').trim();if(note){c.font=notePx+'px "Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif';c.fillStyle='#555760';let lines=wrapExportText(c,note,210,2);for(let k=0;k<lines.length;k++)c.fillText(lines[k],x,y+avatarRadius+48+k*(notePx+3));}
+      c.restore();
+    }
+    // Dedicated credits band below the quadrant frame, separated by a fine divider.
+    const footerTop=by+bh;
+    const footerLineY=footerTop+18;
+    const footerTextY=footerTop+53;
+    c.strokeStyle='#e5e7eb';c.lineWidth=2;
+    c.beginPath();c.moveTo(pad,footerLineY);c.lineTo(W-pad,footerLineY);c.stroke();
+    c.fillStyle='rgba(112,112,120,.70)';
+    c.textAlign='left';c.textBaseline='alphabetic';
+    c.font='500 22px "Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif';
+    c.fillText('篮子采购部',pad+2,footerTextY);
+    c.fillStyle='rgba(112,112,120,.56)';
+    c.textAlign='right';c.font='17px "Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif';
+    c.fillText('Made by 鸡扒',W-pad,footerTextY);
+    const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/png'));
+    if(!blob)throw new Error('PNG 创建失败');
+    const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;
+    a.download='vtuber-viewing-preferences'+(who?'-'+who.replace(/[\\/:*?"<>|]/g,'').slice(0,24):'')+(vertical?'-9x16':'-4x3')+'.png';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),2000);
+  }catch(err){console.error(err);alert('导出图片失败，请检查头像图片是否能正常加载，或换用 Chrome / Edge / Safari 重试。');}
+  finally{btn.disabled=false;btn.textContent=oldLabel;}
+}
+$('#export').addEventListener('click',exportQuadrantImage);
+$('#import').addEventListener('click', ()=>{ const input=document.createElement('input'); input.type='file'; input.accept='application/json'; input.onchange=async()=>{ const f=input.files?.[0]; if(!f) return; try{ const obj=JSON.parse(await f.text()); const placements=obj.placements||{};state={placements,oshiIds:normalizeOshiIds(obj,placements)}; selectedId=null; saveState(); renderPlaced(); }catch(err){ alert('导入失败：不是有效的布局文件。'); } }; input.click(); });
+
+renderList();
+renderPlaced();
+</script>
+</body>
+</html>
