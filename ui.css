@@ -2556,3 +2556,15 @@ button:hover,.btn:hover,.toolbtn:hover {
 .card.story .rating-track { top: calc(50% - 3px); }
 .card.story .rating-control .bar { height: 20px; top: 50%; bottom: auto; transform: translateY(-50%); }
 .card.story .metric-name[contenteditable=true] { position: relative; z-index: 2; }
+
+/* Selection and note editing are separate actions, especially on touch screens. */
+.board .card .note-placeholder { display: none; }
+.board .card.selected .note-placeholder { display: block; }
+.board .card .note[role=button] { cursor: pointer; }
+.board .card .note-placeholder { color: var(--sky-muted); text-decoration: underline; text-underline-offset: 3px; }
+.board .card .tools { z-index: 3; }
+.board .card .remove { touch-action: manipulation; }
+@media(max-width:850px) {
+  .board .card .remove { width: 36px; min-height: 36px; }
+}
+.board .card .note-placeholder { position: absolute; top: 100%; left: 50%; transform: translateX(-50%); white-space: nowrap; min-height: 28px; padding: var(--space-2xs) var(--space-xs); }

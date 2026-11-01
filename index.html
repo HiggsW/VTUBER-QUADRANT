@@ -5,7 +5,7 @@
 <meta name="description" content="整理 VTuber 观看偏好，制作和分享你的推し名片。">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>VTuber 观看偏好四象限 · Cluckworks</title>
-<link rel="stylesheet" href="ui.css?v=portrait-spacing-17">
+<link rel="stylesheet" href="ui.css?v=touch-placement-18">
 <script src="cosmos.js?v=dual-sky-6" defer></script>
 <script src="avatar-source.js?v=local-export-5" defer></script>
 </head>
@@ -17,7 +17,7 @@
     <div class="drawer-handle"></div>
     <div class="side-head">
       
-      <h1>主播名单</h1><p>搜索名字，拖到右侧画布。</p>
+      <h1>主播名单</h1><p>搜索主播，点击加入或拖入画布。</p>
     </div>
     <div class="controls">
       <input id="search" class="search" type="search" placeholder="搜索主播名字">
@@ -2564,7 +2564,7 @@ const backdropEl=$('#drawerBackdrop');
 const mobileInstruction=$('#mobileInstruction');
 const isMobile=()=>window.matchMedia('(max-width:850px)').matches;
 function openDrawer(){drawerEl.classList.add('is-open');backdropEl.classList.add('is-open');}
-function closeDrawer(){drawerEl.classList.remove('is-open');backdropEl.classList.remove('is-open');}
+function closeDrawer(){if(isMobile()&&drawerEl.contains(document.activeElement))document.activeElement.blur();drawerEl.classList.remove('is-open');backdropEl.classList.remove('is-open');}
 function updateMobilePick(){mobileInstruction.hidden=!(isMobile() && mobilePickedId); if(mobilePickedId){const m=memberById(mobilePickedId);mobileInstruction.textContent='点击画布放置：'+(m?.jp||'主播');}}
 
 function normalizeOshiIds(obj, placements){
@@ -2820,9 +2820,9 @@ function renderList(){
     el.draggable=!isMobile();
     el.dataset.id=m.id;
     el.tabIndex=0;el.setAttribute('role','button');el.setAttribute('aria-label','放置 '+(m.jp||m.en));
-    el.addEventListener('keydown',e=>{if(e.target!==el||!['Enter',' '].includes(e.key))return;e.preventDefault();place(m.id,50,50);closeDrawer();});
+    el.addEventListener('keydown',e=>{if(e.target!==el||!['Enter',' '].includes(e.key))return;e.preventDefault();placeFromList(m.id);});
     if(mobilePickedId===m.id)el.classList.add('is-picked');
-    el.addEventListener('click',()=>{if(!isMobile())return;mobilePickedId=m.id;closeDrawer();updateMobilePick();});
+    el.addEventListener('click',()=>{if(!el.classList.contains('dragging'))placeFromList(m.id);});
     if(m.custom){
       el.classList.add('is-custom');
       el.innerHTML=`<div class="avatar" style="background:${avatarBackground(m,!!avatarStore[m.id])}">${avatarHtml(m)}</div>
@@ -2838,7 +2838,7 @@ function renderList(){
         <small>${placed?'已放置':(m.branch==='JP'||m.branch==='EN'?'NIJI '+m.branch:m.branch==='VSPO'?'VSPO!':m.branch==='NEO'?'Neo-Porte':'CR')}</small>`;
       el.addEventListener('contextmenu', e=>{e.preventDefault();uploadAvatar(m.id);});
     }
-    // Touch: tap to choose + tap board, or press/drag from the drawer and release on the canvas.
+    // Touch: tap to place immediately, or drag from the drawer onto the canvas.
     if(window.PointerEvent){
       let gesture=null;
       el.addEventListener('pointerdown',e=>{
@@ -2948,11 +2948,14 @@ function renderPlaced(){
       slot.innerHTML='';
       if(card.editAbort)card.editAbort.abort();
       const label=document.createElement('div');
-      label.className='note';
-      label.textContent=state.placements[id]?.note||'';
+      const note=state.placements[id]?.note||'';
+      label.className='note'+(note?'':' note-placeholder');
+      label.textContent=note||'编辑理由';
+      label.tabIndex=0;label.setAttribute('role','button');label.setAttribute('aria-label','编辑推荐理由');
       label.title='点击编辑推荐理由';
       label.addEventListener('pointerdown',e=>e.stopPropagation());
       label.addEventListener('click',e=>{e.stopPropagation();showEdit();});
+      label.addEventListener('keydown',e=>{if(['Enter',' '].includes(e.key)){e.preventDefault();e.stopPropagation();showEdit();}});
       slot.appendChild(label);
     }
     function showEdit(){
@@ -3002,6 +3005,13 @@ function place(id, x, y){
   if(Object.prototype.hasOwnProperty.call(state.placements,id)) delete state.placements[id];
   state.placements[id] = { x: clamp(x, 5, 95), y: clamp(y, 7, 93), note: prev.note || '' };
   selectedId=id; saveState(); renderPlaced();
+}
+function placeFromList(id){
+  const previous=state.placements[id];
+  const slots=[{x:50,y:50},{x:25,y:50},{x:75,y:50},{x:50,y:25},{x:50,y:75},{x:25,y:25},{x:75,y:25},{x:25,y:75},{x:75,y:75}];
+  const position=previous||slots.find(slot=>Object.values(state.placements).every(p=>Math.hypot(p.x-slot.x,p.y-slot.y)>=20))||slots[0];
+  mobilePickedId=null;updateMobilePick();closeDrawer();
+  place(id,position.x,position.y);
 }
 function removePlacement(id){ state.oshiIds=(state.oshiIds||[]).filter(oshiId=>oshiId!==id); delete state.placements[id]; if(selectedId===id) selectedId=null; saveState(); renderPlaced(); }
 
@@ -3097,9 +3107,9 @@ function enableFreeDrag(card,id){
       }
       saveState();
     }
-    // A short click opens the inline editor; a real drag also moves the card to the top layer.
-    if(!moved){card.openNoteEditor();}
-    else {renderPlaced();}
+    // Touch selects without focusing a textarea or raising the software keyboard.
+    if(moved){renderPlaced();}
+    else if(!isMobile()&&e.pointerType!=='touch'&&e.pointerType!=='pen'){card.openNoteEditor();}
   }
   card.addEventListener('pointerup', finish);
   card.addEventListener('pointercancel', finish);
@@ -3117,9 +3127,9 @@ $('#status').addEventListener('change', renderList);
 $('#toggleSort').addEventListener('click', ()=>{asc=!asc; renderList();});
 $('#help').addEventListener('click', ()=>{alert(`使用说明：
 1. 左侧列表可以单独滚动。
-2. 把主播卡拖进右侧四象限。
+2. 点击列表主播可自动加入四象限，也可以拖动到指定位置。
 3. 放进去之后，可以继续在四象限上任意自由拖动。
-4. 点击头像编辑理由；选中头像后可在上方操作栏设为／取消神推（最多两位）。\n5. 在左侧成员上右键，可上传自选头像。
+4. 手机点头像只选中，再点「编辑理由」输入；电脑可点头像编辑。选中后可在上方设为／取消神推（最多两位）。\n5. 在左侧成员上右键，可上传自选头像。
 6. 点击「自定义象限」后可以直接编辑象限画布上的四轴文字；点击「完成编辑」保存。\n7. 布局自动保存在当前浏览器。`);});
 $('#clear').addEventListener('click', ()=>{ if(!confirm('确定清空所有已放置的卡片吗？')) return; state.placements={};state.oshiIds=[]; selectedId=null; saveState(); renderPlaced(); });
 // High-resolution, self-contained SNS image: draws just the quadrant, not the sidebar or buttons.
