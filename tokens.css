@@ -1,0 +1,146 @@
+/* Hallmark · theme: custom · shape: app screen · shared neutral tokens · v2.0.0 */
+:root {
+  color-scheme: light;
+  --space-3xs: 2px;
+  --space-2xs: 4px;
+  --space-xs: 8px;
+  --space-sm: 12px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 40px;
+  --space-2xl: 64px;
+  --space-3xl: 96px;
+  --space-4xl: 144px;
+
+  --bg:#f5f5f7;
+  --panel:#fefefe;
+  --ink:#1d1d1f;
+  --muted:#626268;
+  --line:#e1e2e6;
+  --deep:#1d1d1f;
+  --accent:#242426;
+  --accent-soft:#ececef;
+  --yellow:#e5e5e9;
+  --blue:#fefefe;
+  --pink:#fefefe;
+  --green:#fefefe;
+  --purple:#fefefe;
+  --shadow:0 12px 40px rgba(20,20,28,.06);
+  --well:#eeeeF1;
+  --nav-bg:#fafafa;
+  --selection:#e3e4e8;
+  --card-shadow:0 12px 36px rgba(20,20,28,.07);
+  --axis:#bcbcc2;
+  --font-body:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif;
+  --font-display:var(--font-body);
+  --focus:#54545c;
+  --on-accent:#fefefe;
+  --overlay:rgba(20,20,25,.25);
+  --gold:#80704a;
+  --gold-soft:#f1eee6;
+
+  --swatch-0:#d9a9c6;
+  --swatch-1:#b8addf;
+  --swatch-2:#9dcfc3;
+  --swatch-3:#d8bd82;
+  --swatch-4:#9dc7df;
+  --swatch-5:#6d6d75;
+  --control-soft:#eeeef1;
+  --control-ink:#46464d;
+  --control-alt:#f1f1f3;
+  --control-alt-ink:#55555e;
+  --control-edge:#cdd0d6;
+  --editable:#f6f6f8;
+  --editable-edge:#b8bbc3;
+  --sky-base:#fdfdfe;
+  --sky-haze:rgba(201,205,214,.07);
+  --sky-dust:rgba(201,205,214,.02);
+  --sky-clear:rgba(201,205,214,0);
+  --sky-ring:rgba(150,157,171,.17);
+  --sky-star:#a5aab5;
+  --sky-ink:#30343b;
+  --sky-muted:#626873;
+  --sky-axis:#b9bec8;
+  --sky-control:#f5f5f7;
+  --sky-control-hover:#ebecf0;
+  --sky-edge:#c9cdd5;
+  --sky-focus:#54545c;
+  --sky-trail:rgba(123,132,149,.32);
+  --board-lift:8px 8px 24px rgba(161,166,178,.12), -8px -8px 24px rgba(254,254,254,.95);
+  --board-inset:inset 6px 6px 16px rgba(163,169,181,.10), inset -6px -6px 16px rgba(254,254,254,.95);
+}
+
+
+
+
+/* Alternate canvas only; application chrome stays white and charcoal. */
+.board[data-sky-theme="dark"] {
+  --sky-base:#1d2027;
+  --sky-haze:rgba(132,145,165,.12);
+  --sky-dust:rgba(132,145,165,.035);
+  --sky-clear:rgba(132,145,165,0);
+  --sky-ring:rgba(172,185,205,.13);
+  --sky-star:#c5cedd;
+  --sky-ink:#eceef4;
+  --sky-muted:#b6c0d1;
+  --sky-axis:#6c778b;
+  --sky-control:#303640;
+  --sky-control-hover:#3e4653;
+  --sky-edge:#7b879b;
+  --sky-focus:#d6dfed;
+  --sky-trail:rgba(192,204,225,.38);
+  --board-inset:inset 6px 6px 16px rgba(7,10,16,.20), inset -6px -6px 16px rgba(58,64,78,.13);
+}
+
+/* Glass surfaces are limited to the personal card. */
+:root {
+  --glass-light:rgba(254,254,254,.82);
+  --glass-clear:rgba(254,254,254,.08);
+  --glass-edge:rgba(254,254,254,.94);
+  --glass-soft-edge:rgba(166,167,184,.24);
+  --glass-panel:rgba(254,254,254,.44);
+  --glass-sheen:rgba(254,254,254,.66);
+  --glass-outline:inset 1px 1px 0 rgba(254,254,254,.96), inset -1px -1px 0 rgba(174,177,192,.16);
+  --glass-photo-shadow:0 6px 18px rgba(89,91,111,.09), inset 1px 1px 0 rgba(254,254,254,.96);
+}
+
+:root {
+  --glass-prism:rgba(214,218,232,.24);
+  --glass-photo-glint:rgba(254,254,254,.18);
+  --glass-drop:0 10px 32px rgba(113,119,143,.07);
+}
+
+:root {
+  --glass-tag-relief: 2px 3px 7px rgba(104,107,124,.10), -2px -2px 6px rgba(254,254,254,.76), inset 1px 1px 0 rgba(254,254,254,.85);
+  --glass-edit-surface: rgba(254,254,254,.76);
+}
+
+/* Personal-card theme values resolve against the selected card palette. */
+.card#cardPreview {
+  --card-frame-ink: color-mix(in srgb,var(--card-accent3) 28%,var(--glass-soft-edge));
+  --glass-tag-surface: color-mix(in srgb,var(--card-bg) 80%,var(--glass-panel));
+}
+
+:root {
+  --glass-engrave-light: rgba(254,254,254,.94);
+  --glass-engrave-cut: rgba(81,83,102,.22);
+}
+.card#cardPreview {
+  --card-engraved-ink: color-mix(in srgb,var(--card-ink) 80%,var(--card-bg));
+}
+
+:root {
+  --card-title-size: 16px;
+  --card-section-size: 14px;
+  --card-tag-size: 15px;
+  --card-metric-size: 12px;
+}
+
+.card#cardPreview {
+  --card-stamp-edge: color-mix(in srgb,var(--card-accent3) 80%,transparent);
+  --card-stamp-surface: color-mix(in srgb,var(--card-accent) 9%,transparent);
+  --card-stamp-ink: color-mix(in srgb,var(--card-accent3) 70%,var(--card-ink));
+  --card-stamp-rule: color-mix(in srgb,var(--card-accent3) 24%,transparent);
+}
+
+:root { --card-heading-ink: #000000; }
